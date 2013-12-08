@@ -1,14 +1,15 @@
-//#include <string.h>
+// Nico Lugil
+
+#pragma once
 
 #include <Arduino.h>
-#pragma once
 
 class BridgeComm
 {
   public:
     BridgeComm() 
     {
-      previous_msg_ID='0';
+      previous_msg_ID='£';   // shouldnt be used as real ID
       strcpy(key_get,"key_get");
       strcpy(key_put,"key_put");
     }
@@ -16,9 +17,11 @@ class BridgeComm
     // starts bridge
     void begin();
 
+#if 0
     // initial 'handshaking' between both sides - to be done before check_for_command ..
     // no timeout for now
     void setup_communication();
+#endif
 
     bool check_for_command();
 

@@ -1,5 +1,7 @@
 // simple integrating YafaDebounce - not using absolute time, results depend on how fast you call this method
 // Based on: http://www.kennethkuhn.com/electronics/debounce.c
+//
+// Nico Lugil
 
 #pragma once
 

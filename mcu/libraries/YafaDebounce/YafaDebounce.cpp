@@ -1,3 +1,5 @@
+// Nico Lugil
+
 #include "YafaDebounce.h"
 
 YafaDebounce::YafaDebounce(uint8_t _pin ,uint32_t _MaxCnt) : pin(_pin), MaxCnt(_MaxCnt)

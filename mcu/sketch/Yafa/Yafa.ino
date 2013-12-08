@@ -1,5 +1,7 @@
 /* vim: set filetype=cpp: */
 
+// Nico Lugil
+
 #include <Console.h>
 #include <Bridge.h>
 #include "TinkerKit.h"
