@@ -3,19 +3,25 @@
 #include "BridgeComm.h"
 #include <Bridge.h>
 
+void BridgeComm::begin()
+{
+   Bridge.begin();
+}
+  
 bool BridgeComm::check_for_command()
 {
    unsigned int r;
-   r=Bridge.get(key_get,buffer,(unsigned int)BUFF_LEN);
+   r=Bridge.get(key_get,buffer,(unsigned int)BUFF_LEN-1);
    if(r==BridgeClass::TRANSFER_TIMEOUT || r==0)
    {                                  
       return false;
    }
-   if(buffer[0]!=previous_msg_ID)
+   if(buffer[0]!=previous_rx_ID)
    {
        //Console.print("new msg, length of get is ");
        //Console.println(r);
-       previous_msg_ID=buffer[0];
+       previous_rx_ID=buffer[0];
+       rx_ID=buffer[0];
        strncpy(command_buff,buffer+1,COMMAND_LEN);
        command_buff[COMMAND_LEN]='\0';
        strncpy(value_buff,buffer+1+COMMAND_LEN,VALUE_LEN);
@@ -25,23 +31,21 @@ bool BridgeComm::check_for_command()
    //Console.println("No new msg");
    return false;
 }
-
-void BridgeComm::begin()
-{
-   Bridge.begin();
-}
-  
-#if 0
-void BridgeComm::setup_communication()
-{
-   // this will look for cmd==start_link with value==0
-   // next does a put of ack_start_link_0 (other side waits for this)
-   // then waits for cmd==start_link with value==1 
-   // next does a put of ack_start_link_1 (other side waits for this)
-   
-   
-
-
-}
-#endif
  
+void BridgeComm::send(char *command, char *value)
+{
+   char ID=previous_tx_ID+1;
+   if(ID<'A' || ID>'Z')
+   {
+      ID='A';
+   }
+   buffer[0]=ID;
+   previous_tx_ID=ID;
+   strncpy(buffer+1,command,COMMAND_LEN);
+   strncpy(buffer+1+COMMAND_LEN,value,VALUE_LEN);
+   buffer[BUFF_LEN-1]='\0';
+   Bridge.put(key_put,buffer);
+
+}
+
+
