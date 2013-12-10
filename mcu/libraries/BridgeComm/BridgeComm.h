@@ -34,6 +34,10 @@ class BridgeComm
     // command and value should max be COMMAND_LEN and VALUE_LEN
     // they do not need to be \0 terminated
     void send(char *command, char *value);
+    void send()
+    {
+       send(tx_command_buff,tx_value_buff);
+    }
 
     const static uint8_t COMMAND_LEN=16;  
     const static uint8_t VALUE_LEN=32;
@@ -55,6 +59,10 @@ public:
     char rx_command_buff[REQ_CMD_BUFF_LEN];
     char rx_value_buff[REQ_VAL_BUFF_LEN];
     char rx_ID;
+
+    // these can be used to send
+    char tx_command_buff[COMMAND_LEN];
+    char tx_value_buff[VALUE_LEN];
   
 };
 

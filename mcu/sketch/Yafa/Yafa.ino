@@ -47,7 +47,12 @@ void loop() {
    {
       Console.println(myBridgeComm.rx_command_buff);
       Console.println(myBridgeComm.rx_value_buff);
+      strncpy(myBridgeComm.tx_command_buff,"Temperature23456",myBridgeComm.COMMAND_LEN);
+      strncpy(myBridgeComm.tx_value_buff,"Heel Warm",myBridgeComm.VALUE_LEN);
+      myBridgeComm.send();
    }
+
+
   
    delay(200);
 
