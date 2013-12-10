@@ -22,10 +22,10 @@ bool BridgeComm::check_for_command()
        //Console.println(r);
        previous_rx_ID=buffer[0];
        rx_ID=buffer[0];
-       strncpy(command_buff,buffer+1,COMMAND_LEN);
-       command_buff[COMMAND_LEN]='\0';
-       strncpy(value_buff,buffer+1+COMMAND_LEN,VALUE_LEN);
-       value_buff[VALUE_LEN]='\0';
+       strncpy(rx_command_buff,buffer+1,COMMAND_LEN);
+       rx_command_buff[COMMAND_LEN]='\0';
+       strncpy(rx_value_buff,buffer+1+COMMAND_LEN,VALUE_LEN);
+       rx_value_buff[VALUE_LEN]='\0';
        return true;
    }
    //Console.println("No new msg");

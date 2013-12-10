@@ -13,9 +13,12 @@ class BridgeComm:
        if BridgeComm.previous_tx_id=='Z':
           msg_id='A'
        else:
-          msg_id=chr(ord(previous_tx_id) + 1)
-          msg=msg_id+(command[:COMMAND_LEN]).ljust(COMMAND_LEN)+(value[:VALUE_LEN]).ljust(VALUE_LEN)
-          bc.put('key_get',msg)
+          msg_id=chr(ord(BridgeComm.previous_tx_id) + 1)
+       msg=msg_id+(command[:BridgeComm.COMMAND_LEN]).ljust(BridgeComm.COMMAND_LEN)+(value[:BridgeComm.VALUE_LEN]).ljust(BridgeComm.VALUE_LEN)
+       print "I123456789012345612345678901234567890123456789012"
+       print "ICCCCCCCCCCCCCCCCVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV"
+       print msg
+       bc.put('key_get',msg)
        BridgeComm.previous_tx_id=msg_id
 
 

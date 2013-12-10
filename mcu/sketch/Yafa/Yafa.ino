@@ -3,9 +3,9 @@
 // Nico Lugil
 
 #include <Console.h>
-#include <Bridge.h>
 #include "TinkerKit.h"
 #include "YafaDebounce.h"
+#include "BridgeComm.h"
 
 #define PIN_CO2 2
 #define PIN_TEMP 10
@@ -15,6 +15,7 @@
 TKRelay Cool(PIN_COOL);
 TKRelay Heat(PIN_HEAT);
 YafaDebounce CO2(PIN_CO2,20); // TODO - tweak MaxCnt
+BridgeComm myBridgeComm;
 
 void setup() {
   pinMode(PIN_TEMP, INPUT);
@@ -22,7 +23,9 @@ void setup() {
   pinMode(PIN_HEAT, OUTPUT);
   
   CO2.init();
-  Bridge.begin();
+
+  myBridgeComm.begin();
+
   while(!Console)
   {
   }
@@ -38,6 +41,12 @@ void loop() {
    if(CO2.is_rising())
    {
       Console.println("Rise");
+   }
+
+   if(myBridgeComm.check_for_command())
+   {
+      Console.println(myBridgeComm.rx_command_buff);
+      Console.println(myBridgeComm.rx_value_buff);
    }
   
    delay(200);
