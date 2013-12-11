@@ -18,18 +18,18 @@ YafaDebounce CO2(PIN_CO2,20); // TODO - tweak MaxCnt
 BridgeComm myBridgeComm;
 
 void setup() {
-  pinMode(PIN_TEMP, INPUT);
-  pinMode(PIN_COOL, OUTPUT);
-  pinMode(PIN_HEAT, OUTPUT);
-  
-  CO2.init();
+   pinMode(PIN_TEMP, INPUT);
+   pinMode(PIN_COOL, OUTPUT);
+   pinMode(PIN_HEAT, OUTPUT);
 
-  myBridgeComm.begin();
+   CO2.init();
 
-  while(!Console)
-  {
-  }
-  Console.println("Console started");
+   myBridgeComm.begin();
+
+   while(!Console)
+   {
+   }
+   Console.println("Console started");
 }
 
 void loop() {
@@ -47,13 +47,16 @@ void loop() {
    {
       Console.println(myBridgeComm.rx_command_buff);
       Console.println(myBridgeComm.rx_value_buff);
-      strncpy(myBridgeComm.tx_command_buff,"Temperature",myBridgeComm.COMMAND_LEN);
-      strncpy(myBridgeComm.tx_value_buff,"21.5",myBridgeComm.VALUE_LEN);
+      if(strcmp(myBridgeComm.rx_command_buff,"Temp?")==0)
+      {
+         strncpy(myBridgeComm.tx_command_buff,"Temp=",myBridgeComm.COMMAND_LEN);
+         strncpy(myBridgeComm.tx_value_buff,"21.5",myBridgeComm.VALUE_LEN);
+      }
       myBridgeComm.send();
    }
 
 
-  
-   delay(200);
+
+   delay(20);
 
 }
