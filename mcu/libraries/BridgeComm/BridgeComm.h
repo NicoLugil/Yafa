@@ -51,6 +51,8 @@ class BridgeComm
     char key_get[8];
     char key_put[8];
 
+    const static char filler='#';  // should not appear in real commands
+
     const static uint8_t REQ_CMD_BUFF_LEN=COMMAND_LEN+1;  // +1 for \0
     const static uint8_t REQ_VAL_BUFF_LEN=VALUE_LEN+1;  // +1 for \0
 
