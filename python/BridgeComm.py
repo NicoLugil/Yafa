@@ -39,9 +39,23 @@ class BridgeComm:
             BridgeComm.read_ID = msg[0]
             BridgeComm.read_command = (msg[1:1+BridgeComm.COMMAND_LEN]).translate(None,BridgeComm.filler);
             BridgeComm.read_value = (msg[1+BridgeComm.COMMAND_LEN:]).translate(None,BridgeComm.filler);
-            print BridgeComm.read_ID,BridgeComm.read_command,BridgeComm.read_value
+            #print BridgeComm.read_ID,BridgeComm.read_command,BridgeComm.read_value
             return True
-
+    # checks for new msg (with timeout in seconds)
+    # returns true if new msg, false if timed out
+    def wait_for_new_msg(self,timeout):
+         ok=False
+         start=time.time();
+         while True:
+            if self.check_new_msg():
+               ok=True
+               break
+            now=time.time()
+            if (now-start) > timeout:
+               break
+            print "sleep"
+            time.sleep(0.5)
+         return ok
 
 
 

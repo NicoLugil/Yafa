@@ -39,6 +39,22 @@ class BridgeComm
        send(tx_command_buff,tx_value_buff);
     }
 
+    // sets tx_value based on float
+    // prec: number of chars behind dec point
+    // abs(v) should be <=TX_VAL_MAXABS
+    // TODO: handle if not in range
+    void set_tx_value(float v, uint8_t prec);
+
+  private:
+    // I am using the dtostrf function to convert from float --> char array
+    // imho this isn't an extremely safe function. For now: put bound on "char before 
+    // and after dec point with the 2 consts below, which after conversion should
+    // easily fit in the the allowed char array
+    // TODO: optimize
+    const static uint8_t TX_FLOAT_CONVERT_VAL_MAX_PRECISION=5;   // max #char used behind dec point for float conversion
+    const static float TX_FLOAT_CONVERT_VAL_MAXABS=999998;   // max abs(val) for float conversion
+
+  public:
     const static uint8_t COMMAND_LEN=16;  
     const static uint8_t VALUE_LEN=32;
 

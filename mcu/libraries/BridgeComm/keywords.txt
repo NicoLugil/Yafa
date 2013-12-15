@@ -1,0 +1,24 @@
+#######################################
+# Syntax Coloring Map For BridgeComm
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+BridgeComm	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+check_for_command	KEYWORD2
+send	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+COMMAND_LEN LITERAL1
+VALUE_LEN LITERAL1
+

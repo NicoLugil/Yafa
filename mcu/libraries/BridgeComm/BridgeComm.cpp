@@ -65,4 +65,23 @@ void BridgeComm::send(char *command, char *value)
    Bridge.put(key_put,buffer);
 }
 
+void BridgeComm::set_tx_value(float v, uint8_t prec)
+{
+
+   if(fabs(v)>TX_FLOAT_CONVERT_VAL_MAXABS)
+   {
+      // TODO: handle this better
+      strncpy(tx_value_buff,"CONV_RNG_EXC",VALUE_LEN);
+   }
+   if(prec>TX_FLOAT_CONVERT_VAL_MAX_PRECISION)
+   {
+      // TODO: handle this better
+      prec = TX_FLOAT_CONVERT_VAL_MAX_PRECISION;
+   }
+
+   // +2 for - and ., extra 2 for maybe /0, ???
+   // we have space enough with 32 now...
+   dtostrf(v,2+prec+2,prec,tx_value_buff);
+}
+
 
