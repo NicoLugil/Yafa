@@ -1,19 +1,34 @@
 <html>
 <head>
-<script type="text/javascript"
-  src="dygraph-combined.js"></script>
+    <script type="text/javascript"
+            src="dygraph-combined.js"></script>
+    <script type="text/javascript"
+            src="raphael-min.js"></script>
 </head>
 <body>
 <div id="graphdiv2"
-  style="width:500px; height:300px;"></div>
+     style="width:500px; height:300px;"></div>
+<div id="canvas_container"
+     style="width:500px; height:500px;"></div>
 <script type="text/javascript">
-  g2 = new Dygraph(
-    document.getElementById("graphdiv2"),
-    "dat.csv", // path to CSV file
-    {labels: ["Date", "Room Temp"],
-     rollPeriod: 3,
-     showRoller: true}    
-  );
+    g2 = new Dygraph(
+            document.getElementById("graphdiv2"),
+            "dat.csv", // path to CSV file
+            {labels: ["Date", "Room Temp"],
+                rollPeriod: 3,
+                showRoller: true
+            }
+    );
+</script>
+<script type="text/javascript">
+    var paper=new Raphael(document.getElementById("canvas_container"), 500, 500);
+    var circle = paper.rect(200,200,100,34,4);
+    circle.attr("fill","greenyellow");
+    circle.attr("stroke","#000");
+
+    var mytxt = paper.text(250,217,"Cooling");
+    mytxt.attr({'font-size': 20});
+
 </script>
 </body>
 </html>
