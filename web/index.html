@@ -1,0 +1,20 @@
+<html>
+<head>
+<script type="text/javascript"
+  src="dygraph-combined.js"></script>
+</head>
+<body>
+<div id="graphdiv2"
+  style="width:500px; height:300px;"></div>
+<script type="text/javascript">
+  g2 = new Dygraph(
+    document.getElementById("graphdiv2"),
+    "dat.csv", // path to CSV file
+    {labels: ["Date", "Room Temp"],
+     rollPeriod: 3,
+     showRoller: true}    
+  );
+</script>
+</body>
+</html>
+
