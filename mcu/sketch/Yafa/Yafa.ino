@@ -8,6 +8,7 @@
 #include "BridgeComm.h"
 #include "OneWire.h"
 #include "DallasTemperature.h"
+#include "settings.h"
 
 #define PIN_CO2 2
 #define PIN_TEMP 10
@@ -21,9 +22,27 @@ BridgeComm myBridgeComm;
 
 OneWire ow(PIN_TEMP);
 DallasTemperature sensors(&ow);
+settings mySettings();
 
 // arrays to hold device address
 DeviceAddress Thermometer;
+
+// todo make class or so
+unsigned long last_tmp_meas_time;
+float temp_measured;
+float get_temp()
+{
+   sensors.requestTemperatures();
+   temp_measured = sensors.getTempCByIndex(0);
+   last_tmp_meas_time=millis();
+   Console.print("temp measured=");
+   Console.println(temp_measured);
+   return temp_measured;
+}
+
+// co2 stuff
+int pulses_between_checks;
+
 
 void setup() {
    pinMode(PIN_TEMP, INPUT);
@@ -75,9 +94,29 @@ void setup() {
       Console.print(res, DEC); 
       Console.println();
    }
+
+   // init temp
+   get_temp();
+
+   // init c02
+   pulses_between_checks=0;
+
 }
 
-void loop() {
+void loop() 
+{
+
+   // do all the local stuff
+   // - meas tmp
+   // - control heat/cool
+   // - meas CO2 production
+   //
+   // temp/ do every 30 sec
+   unsigned int long now = millis();
+   if((now-last_tmp_meas_time)>30000)
+   {
+      get_temp();
+   }
 
    if(CO2.is_falling())
    {
@@ -85,7 +124,9 @@ void loop() {
    }
    if(CO2.is_rising())
    {
-      Console.println("Rise");
+      Console.print("Rise: total cnts between checks=");
+      pulses_between_checks++;
+      Console.println(pulses_between_checks);
    }
 
    if(myBridgeComm.check_for_command())
@@ -94,16 +135,21 @@ void loop() {
       Console.println(myBridgeComm.rx_value_buff);
       if(strcmp(myBridgeComm.rx_command_buff,"Temp?")==0)
       {
-         sensors.requestTemperatures();
-         float temp = sensors.getTempCByIndex(0);
-         //alternative: float temp = sensors.getTempC(Thermometer);
-         Console.println(temp);
+         get_temp();
+         Console.println("Temp request");
          strncpy(myBridgeComm.tx_command_buff,"Temp=",myBridgeComm.COMMAND_LEN);
-         myBridgeComm.set_tx_value(temp,2);
+         myBridgeComm.set_tx_value(temp_measured,2);
+      }
+      if(strcmp(myBridgeComm.rx_command_buff,"CO2?")==0)
+      {
+         Console.println("CO2 request");
+         strncpy(myBridgeComm.tx_command_buff,"CO2=",myBridgeComm.COMMAND_LEN);
+         myBridgeComm.set_tx_value(pulses_between_checks);
+         pulses_between_checks=0;
+
       }
       myBridgeComm.send();
    }
-
 
 
    delay(100);

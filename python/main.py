@@ -18,26 +18,31 @@ myComm = BridgeComm()
 #myComm.check_new_msg()
 
 while True:
-    time.sleep(301)
     myFileIO = StringIO.StringIO()
     myComm.send("Temp?","-")
     #if myComm.check_new_msg():
     if myComm.wait_for_new_msg(10):
-       now=datetime.datetime.now()
-       now_str=now.strftime("%Y-%m-%d %H:%M")
-       print now_str
        print "New Temp received"
        print myComm.read_ID,myComm.read_command,myComm.read_value
-       myFileIO.write(now_str)
-       myFileIO.write(" ")
-       myFileIO.write(myComm.read_value)
-       myFileIO.seek(0)
-       ftp=FTP("ftp.homebrew.be")
-       ftp.login(private.pw.myUser,private.pw.myPass)
-       ftp.cwd("www.homebrew.be/Yafa")
-       ftp.storlines("APPE temp.txt",myFileIO)
-       ftp.close()
-       myFileIO.close()
-
-
+       temp=myComm.read_value
+    myComm.send("CO2?","-")
+    if myComm.wait_for_new_msg(10):
+       print "New CO2 pulses received"
+       print myComm.read_ID,myComm.read_command,myComm.read_value
+       pulses=myComm.read_value
+    now=datetime.datetime.now()
+    now_str=now.strftime("%Y-%m-%d %H:%M")
+    myFileIO.write(now_str)
+    myFileIO.write(",")
+    myFileIO.write(temp)
+    myFileIO.write(",")
+    myFileIO.write(pulses)
+    myFileIO.seek(0)
+    ftp=FTP("ftp.homebrew.be")
+    ftp.login(private.pw.myUser,private.pw.myPass)
+    ftp.cwd("www.homebrew.be/Yafa")
+    ftp.storlines("APPE dat.csv",myFileIO)
+    ftp.close()
+    myFileIO.close()
+    time.sleep(301)
 print end

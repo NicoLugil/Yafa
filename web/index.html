@@ -10,6 +10,10 @@
      style="width:640px; height:160px;"></div>
 <div id="graphdiv2"
      style="width:640px; height:300px;"></div>
+<div id="white"
+     style="width:640px; height:60px;"></div>
+<div id="graphdiv3"
+     style="width:640px; height:300px;"></div>
 <div id="canvas_container"
      style="width:640px; height:500px;"></div>
 <script type="text/javascript">
@@ -26,10 +30,23 @@
     g2 = new Dygraph(
             document.getElementById("graphdiv2"),
             "dat.csv", // path to CSV file
-            {labels: ["Date", "Temperature"],
+            {labels: ["Date", "Temperature","pulses"],
                 rollPeriod: 3,
                 showRoller: true,
-                title: "Temperature"
+                title: "Temperature",
+                visibility: [true, false]
+            }
+    );
+</script>
+<script type="text/javascript">
+    g3 = new Dygraph(
+            document.getElementById("graphdiv3"),
+            "dat.csv", // path to CSV file
+            {labels: ["Date", "Temperature","pulses"],
+                rollPeriod: 3,
+                showRoller: true,
+                title: "CO2 pulses",
+                visibility: [false, true]
             }
     );
 </script>

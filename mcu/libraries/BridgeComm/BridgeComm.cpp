@@ -84,4 +84,10 @@ void BridgeComm::set_tx_value(float v, uint8_t prec)
    dtostrf(v,2+prec+2,prec,tx_value_buff);
 }
 
+void BridgeComm::set_tx_value(unsigned int v)
+{
+   // TODO: check if fits in string
+   itoa(v,tx_value_buff,10);
+}
+
 

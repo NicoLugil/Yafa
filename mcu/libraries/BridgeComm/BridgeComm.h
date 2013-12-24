@@ -45,6 +45,9 @@ class BridgeComm
     // TODO: handle if not in range
     void set_tx_value(float v, uint8_t prec);
 
+    // sets tx_value based on unsigned int
+    void set_tx_value(unsigned int v);
+
   private:
     // I am using the dtostrf function to convert from float --> char array
     // imho this isn't an extremely safe function. For now: put bound on "char before 
