@@ -22,7 +22,7 @@ BridgeComm myBridgeComm;
 
 OneWire ow(PIN_TEMP);
 DallasTemperature sensors(&ow);
-settings mySettings();
+settings mySettings;
 
 // arrays to hold device address
 DeviceAddress Thermometer;
@@ -41,8 +41,40 @@ float get_temp()
 }
 
 // co2 stuff
-int pulses_between_checks;
+int pulses_between_checks;  // only 16 bit, ok?
 
+// heat/cool stuff
+bool heat_on;
+bool cool_on;
+unsigned long last_time_cool_on;
+void set_heat(bool v)
+{
+   heat_on=v;
+   if(v)
+   {
+      Heat.on();
+   }
+   else
+   {
+      Heat.off();
+   }
+}
+
+void set_cool(bool v)
+{
+   cool_on=v;
+   if(v)
+   {
+      Cool.on();
+   }
+   else
+   {
+      Cool.off();
+   }
+}
+uint32_t n_cool_on;
+uint32_t n_heat_on;
+uint32_t n_total;
 
 void setup() {
    pinMode(PIN_TEMP, INPUT);
@@ -79,7 +111,6 @@ void setup() {
    printAddress(Thermometer);
    Console.println();
 
-
    uint8_t res=sensors.getResolution(Thermometer);
    Console.print("Device 0 Resolution: ");
    Console.print(res, DEC); 
@@ -101,6 +132,13 @@ void setup() {
    // init c02
    pulses_between_checks=0;
 
+   // init heat/cool
+   set_heat(false);
+   set_cool(false);
+   last_time_cool_on=millis();  // assume cooler was on
+   n_cool_on=0;
+   n_heat_on=0;
+   n_total=0;
 }
 
 void loop() 
@@ -113,9 +151,47 @@ void loop()
    //
    // temp/ do every 30 sec
    unsigned int long now = millis();
-   if((now-last_tmp_meas_time)>30000)
+   if((now-last_tmp_meas_time)>10000)
    {
       get_temp();
+
+      // TODO: avoid switch to same situation
+      if(temp_measured>(mySettings.desiredTemp+mySettings.HystOneSide))
+      {
+         if( (now-last_time_cool_on) > 1000*mySettings.FridgeTimeOff)
+         {
+            set_cool(true);  // TODO: delay compressor
+         }
+         set_heat(false);
+      }
+      else if(temp_measured<(mySettings.desiredTemp-mySettings.HystOneSide)) 
+      {
+         set_cool(false);
+         set_heat(true);
+      }
+      else
+      {
+         set_cool(false);
+         set_heat(false);
+      }
+      if(cool_on)
+      {
+         n_cool_on++;
+      }
+      if(heat_on)
+      {
+         n_heat_on++;
+      }
+      n_total++;
+      Console.print(n_cool_on);
+      Console.print(" ");
+      Console.print(n_heat_on);
+      Console.print(" ");
+      Console.println(n_total);
+   }
+   if(cool_on)
+   {
+      last_time_cool_on=now;
    }
 
    if(CO2.is_falling())
@@ -139,6 +215,7 @@ void loop()
          Console.println("Temp request");
          strncpy(myBridgeComm.tx_command_buff,"Temp=",myBridgeComm.COMMAND_LEN);
          myBridgeComm.set_tx_value(temp_measured,2);
+         myBridgeComm.send();
       }
       if(strcmp(myBridgeComm.rx_command_buff,"CO2?")==0)
       {
@@ -146,11 +223,25 @@ void loop()
          strncpy(myBridgeComm.tx_command_buff,"CO2=",myBridgeComm.COMMAND_LEN);
          myBridgeComm.set_tx_value(pulses_between_checks);
          pulses_between_checks=0;
-
+         myBridgeComm.send();
       }
-      myBridgeComm.send();
-   }
+      if(strcmp(myBridgeComm.rx_command_buff,"Act?")==0)
+      {
+         Console.println("actuators request");
+         strncpy(myBridgeComm.tx_command_buff,"ActCool=",myBridgeComm.COMMAND_LEN);
+         // TODO: better concat of the 3 values - for now assume never above 1024
+         // and hence 3 values fitting in 32bit
+         uint32_t myVal=n_cool_on+1024lu*n_heat_on+1024lu*1024lu*n_total;
+         Console.print("myVal=");
+         Console.println(myVal);
+         myBridgeComm.set_tx_value_long(myVal);
+         n_cool_on=0;
+         n_heat_on=0;
+         n_total=0;
+         myBridgeComm.send();
+      }
 
+   }
 
    delay(100);
 

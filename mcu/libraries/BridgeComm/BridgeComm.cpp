@@ -87,7 +87,16 @@ void BridgeComm::set_tx_value(float v, uint8_t prec)
 void BridgeComm::set_tx_value(unsigned int v)
 {
    // TODO: check if fits in string
+   //Console.println(v);
    itoa(v,tx_value_buff,10);
+   //Console.println(tx_value_buff);
+}
+void BridgeComm::set_tx_value_long(uint32_t v)
+{
+   // TODO: check if fits in string
+   Console.println(v);
+   ultoa(v,tx_value_buff,10);
+   Console.println(tx_value_buff);
 }
 
 

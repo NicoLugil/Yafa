@@ -17,7 +17,7 @@ class settings
 
       void ToDefault()
       {
-         desiredTemp=20.0;
+         desiredTemp=19.5;
          HystOneSide=0.25;
          FridgeTimeOff=10;
       }

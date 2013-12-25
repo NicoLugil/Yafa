@@ -14,8 +14,12 @@
      style="width:640px; height:60px;"></div>
 <div id="graphdiv3"
      style="width:640px; height:300px;"></div>
+<div id="white2"
+     style="width:640px; height:60px;"></div>
+<div id="graphdiv4"
+     style="width:640px; height:300px;"></div>
 <div id="canvas_container"
-     style="width:640px; height:500px;"></div>
+style="width:640px; height:500px;"></div>
 <script type="text/javascript">
     var paper=new Raphael(document.getElementById("Logo"), 640, 160);
     var rect = paper.rect(0,0,640,140,6);
@@ -30,11 +34,11 @@
     g2 = new Dygraph(
             document.getElementById("graphdiv2"),
             "dat.csv", // path to CSV file
-            {labels: ["Date", "Temperature","pulses"],
+            {labels: ["Date", "Temperature","pulses","Heat/Cool"],
                 rollPeriod: 3,
                 showRoller: true,
                 title: "Temperature",
-                visibility: [true, false]
+                visibility: [true, false, false]
             }
     );
 </script>
@@ -42,11 +46,23 @@
     g3 = new Dygraph(
             document.getElementById("graphdiv3"),
             "dat.csv", // path to CSV file
-            {labels: ["Date", "Temperature","pulses"],
+            {labels: ["Date", "Temperature","pulses","Heat/Cool"],
                 rollPeriod: 3,
                 showRoller: true,
                 title: "CO2 pulses",
-                visibility: [false, true]
+                visibility: [false, true, false]
+            }
+    );
+</script>
+<script type="text/javascript">
+    g4 = new Dygraph(
+            document.getElementById("graphdiv4"),
+            "dat.csv", // path to CSV file
+            {labels: ["Date", "Temperature","pulses","Heat/Cool"],
+                rollPeriod: 3,
+                showRoller: true,
+                title: "Heating (1), Cooling (-1)",
+                visibility: [false, false, true]
             }
     );
 </script>
