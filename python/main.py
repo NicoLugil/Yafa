@@ -38,8 +38,11 @@ while True:
        print "New Act values received" # TODO: check response comand!!!
        print myComm.read_ID,myComm.read_command,myComm.read_value
        cool_on=int(myComm.read_value) & 1023
+       print "cool_on=",cool_on
        heat_on=(int(myComm.read_value)>>10) & 1023
-       total_on=(int(myComm.read_value)>>20) & (1024*1023)
+       print "heat_on=",heat_on
+       total_on=(int(myComm.read_value)>>20) & 1023
+       print "total_on=",total_on
        if int(total_on)!=0:
            perc_cool = cool_on/float(total_on)
            perc_heat = heat_on/float(total_on)
