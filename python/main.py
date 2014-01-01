@@ -2,20 +2,38 @@
 import sys    
 import time
 import string
-import private.pw
 import datetime
-from BridgeComm import BridgeComm
 from ftplib import FTP
+from subprocess import call
 import StringIO
-from ftplib import FTP
 
+from BridgeComm import BridgeComm
+from ParseSettings import ParseSettings
+import private.pw
+
+mySettings = ParseSettings()
+mySettings.parse()
+
+# reset mcu and establish connection
+print "resetting mcu now"            
+call(["reset-mcu"])                  
+time.sleep(5)         
 myComm = BridgeComm()
+myComm.send("Init?","-")
+if myComm.wait_for_new_msg(10):
+   if myComm.read_command=="Init!":
+     print "MCU OK!"
+     # TODO: send some info or so
+   else:
+     print "MCU error: unexpexted response"
+     print myComm.read_ID,myComm.read_command,myComm.read_value
+     # TODO: error and use UnExp! from MCU side
+     exit(1)
+else:
+   # TODO error
+   print "MCU error no response"
+   exit(1)
 
-#myComm.send("boe","bah")
-#myComm.send("boe","bah")
-#myComm.send("12345678901234567","123456789012345678901234567890123")
-#myComm.check_new_msg()
-#myComm.check_new_msg()
 
 my_cnt=0
 perc_cool=0.

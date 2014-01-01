@@ -15,7 +15,7 @@
 
 // set to true to include code implementing alarm search functions
 #ifndef REQUIRESALARMS
-#define REQUIRESALARMS true
+#define REQUIRESALARMS false
 #endif
 
 #include <inttypes.h>

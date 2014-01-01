@@ -84,6 +84,19 @@ void setup() {
    CO2.init();
 
    myBridgeComm.begin();
+   while(!myBridgeComm.check_for_command())
+   {}
+   if(strcmp(myBridgeComm.rx_command_buff,"Init?")==0)
+   {
+      strncpy(myBridgeComm.tx_command_buff,"Init!",myBridgeComm.COMMAND_LEN);
+      myBridgeComm.set_tx_value(1234);
+   }
+   else
+   {
+      strncpy(myBridgeComm.tx_command_buff,"UnExp!",myBridgeComm.COMMAND_LEN);
+      strncpy(myBridgeComm.tx_value_buff,myBridgeComm.rx_command_buff,myBridgeComm.VALUE_LEN);
+   }
+   myBridgeComm.send();
 
    while(!Console)
    {
@@ -156,24 +169,41 @@ void loop()
       get_temp();
 
       // TODO: avoid switch to same situation
-      if(temp_measured>(mySettings.desiredTemp+mySettings.HystOneSide))
+
+      if(!cool_on && !heat_on)
       {
-         if( (now-last_time_cool_on) > 1000*mySettings.FridgeTimeOff)
+         if(temp_measured>(mySettings.desiredTemp+mySettings.HystOneSide))
          {
-            set_cool(true);  // TODO: delay compressor
+            if( (now-last_time_cool_on) > 1000*mySettings.FridgeTimeOff)
+            {
+               set_cool(true);  
+            }
+            set_heat(false); // remove ??
          }
-         set_heat(false);
+         else if(temp_measured<(mySettings.desiredTemp-mySettings.HystOneSide)) 
+         {
+            set_cool(false); // remove ??
+            set_heat(true);
+         }
       }
-      else if(temp_measured<(mySettings.desiredTemp-mySettings.HystOneSide)) 
+      else if(cool_on)
       {
-         set_cool(false);
-         set_heat(true);
+         if(temp_measured<=mySettings.desiredTemp) 
+         {
+            set_cool(false);
+         }
+         set_heat(false);  // remove ??
       }
       else
       {
-         set_cool(false);
-         set_heat(false);
+         // heat && !cool
+         if(temp_measured>=mySettings.desiredTemp) 
+         {
+            set_heat(false); 
+         }
+         set_cool(false); // remove ??
       }
+
       if(cool_on)
       {
          n_cool_on++;
