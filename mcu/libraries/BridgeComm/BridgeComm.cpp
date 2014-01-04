@@ -1,4 +1,6 @@
-// Nico Lugil
+// author: Nico Lugil
+// TODO: some more text here + license. Would appreciate if you mention
+// my name if you use this code
 
 #include "BridgeComm.h"
 #include <Bridge.h>

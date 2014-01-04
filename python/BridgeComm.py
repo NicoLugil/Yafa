@@ -1,3 +1,8 @@
+# Author: Nico Lugil
+# TODO: some more text here + some license stuff
+# Would appreciate if you mention
+# my name if you use this code
+
 import sys
 import string
 import time

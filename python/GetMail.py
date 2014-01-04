@@ -3,10 +3,23 @@ import sys
 import imaplib
 import private.pw
 import email
+import feedparser
 
 USERNAME = private.pw.myMailUser
 PASSWORD = private.pw.myMailPass
 MAILTO  = private.pw.myMailTo
+
+# first check if there is new mail
+PROTO="https://"
+SERVER="mail.google.com"
+PATH="/gmail/feed/atom"
+
+n_email = int(feedparser.parse(PROTO + USERNAME + ":" + PASSWORD + "@" + SERVER + PATH)["feed"]["fullcount"])
+if n_email > 0:
+    print "New mail!"
+else:
+    print "No new mail!"
+    exit(0)
 
 imap_server = imaplib.IMAP4_SSL("imap.gmail.com",993)
 imap_server.login(USERNAME, PASSWORD)
@@ -26,7 +39,7 @@ for my_uid in data[0].split():
          if part.get_content_maintype() == 'text':
             my_msg = part.get_payload()
    elif maintype == 'text':
-     my_msg = email_msg.get_payload()
+      my_msg = email_msg.get_payload()
    print my_msg
 imap_server.close()
 imap_server.logout()
