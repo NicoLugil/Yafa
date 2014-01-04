@@ -80,6 +80,7 @@ void setup() {
    pinMode(PIN_TEMP, INPUT);
    pinMode(PIN_COOL, OUTPUT);
    pinMode(PIN_HEAT, OUTPUT);
+   pinMode(13,OUTPUT);
 
    CO2.init();
 
@@ -98,9 +99,9 @@ void setup() {
    }
    myBridgeComm.send();
 
-   while(!Console)
-   {
-   }
+//   while(!Console)
+//   {
+//   }
    Console.println("Console started");
 
    // locate devices on the bus
@@ -166,7 +167,9 @@ void loop()
    unsigned int long now = millis();
    if((now-last_tmp_meas_time)>10000)
    {
+      digitalWrite(13,HIGH);
       get_temp();
+      digitalWrite(13,LOW);
 
       // TODO: avoid switch to same situation
 
@@ -174,7 +177,7 @@ void loop()
       {
          if(temp_measured>(mySettings.desiredTemp+mySettings.HystOneSide))
          {
-            if( (now-last_time_cool_on) > 1000*mySettings.FridgeTimeOff)
+            if( (now-last_time_cool_on) > 60*1000*mySettings.FridgeTimeOff)
             {
                set_cool(true);  
             }

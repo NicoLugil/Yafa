@@ -11,11 +11,14 @@ from BridgeComm import BridgeComm
 from ParseSettings import ParseSettings
 import private.pw
 
+# TODO: replace print to logging system with rotating files
+
 mySettings = ParseSettings()
 mySettings.parse()
 
 # reset mcu and establish connection
 print "resetting mcu now"            
+sys.stdout.flush()
 call(["reset-mcu"])                  
 time.sleep(5)         
 myComm = BridgeComm()
@@ -82,7 +85,7 @@ while True:
     myFileIO.write(str(avg_act))
     myFileIO.seek(0)
     ftp=FTP("ftp.homebrew.be")
-    ftp.login(private.pw.myUser,private.pw.myPass)
+    ftp.login(private.pw.myFtpUser,private.pw.myFtpPass)
     ftp.cwd("www.homebrew.be/Yafa")
     if my_cnt==0:
         ftp.storlines("STOR dat.csv",myFileIO)
@@ -91,6 +94,7 @@ while True:
         ftp.storlines("APPE dat.csv",myFileIO)
     ftp.close()
     myFileIO.close()
+    sys.stdout.flush()
     time.sleep(301)
 print end
 
