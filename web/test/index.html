@@ -1,0 +1,80 @@
+<html>
+<head>
+    <script type="text/javascript"
+            src="../dygraph-combined.js"></script>
+    <script type="text/javascript"
+            src="../raphael-min.js"></script>
+</head>
+<body>
+<div id="Logo"
+     style="width:640px; height:160px;"></div>
+<div id="graphdiv2"
+     style="width:640px; height:300px;"></div>
+<div id="white"
+     style="width:640px; height:60px;"></div>
+<div id="graphdiv3"
+     style="width:640px; height:300px;"></div>
+<div id="white2"
+     style="width:640px; height:60px;"></div>
+<div id="graphdiv4"
+     style="width:640px; height:300px;"></div>
+<div id="canvas_container"
+style="width:640px; height:500px;"></div>
+<script type="text/javascript">
+    var paper=new Raphael(document.getElementById("Logo"), 640, 160);
+    var rect = paper.rect(0,0,640,140,6);
+    rect.attr("fill","snow");
+    rect.attr("stroke","black");
+    var mytxt = paper.text(320,45,"Yafa!");
+    mytxt.attr({'font-size': 80, 'fill': "Black"});
+    var mytxt2 = paper.text(320,105,"Your Arduino based Fermentation Assistant");
+    mytxt2.attr({'font-size': 30, 'fill': "Black"});
+</script>
+<script type="text/javascript">
+    g2 = new Dygraph(
+            document.getElementById("graphdiv2"),
+            "dat.csv", // path to CSV file
+            {labels: ["Date", "Temperature","pulses","Heat/Cool"],
+                rollPeriod: 3,
+                showRoller: true,
+                title: "Temperature",
+                visibility: [true, false, false]
+            }
+    );
+</script>
+<script type="text/javascript">
+    g3 = new Dygraph(
+            document.getElementById("graphdiv3"),
+            "dat.csv", // path to CSV file
+            {labels: ["Date", "Temperature","pulses","Heat/Cool"],
+                rollPeriod: 3,
+                showRoller: true,
+                title: "CO2 pulses",
+                visibility: [false, true, false]
+            }
+    );
+</script>
+<script type="text/javascript">
+    g4 = new Dygraph(
+            document.getElementById("graphdiv4"),
+            "dat.csv", // path to CSV file
+            {labels: ["Date", "Temperature","pulses","Heat/Cool"],
+                rollPeriod: 1,
+                showRoller: true,
+                title: "Heating (1), Cooling (-1)",
+                visibility: [false, false, true]
+            }
+    );
+</script>
+<script type="text/javascript">
+//    var paper=new Raphael(document.getElementById("canvas_container"), 500, 500);
+//    var circle = paper.rect(200,200,100,34,4);
+//    circle.attr("fill","greenyellow");
+//    circle.attr("stroke","#000");
+//
+//    var mytxt = paper.text(250,217,"Cooling");
+//    mytxt.attr({'font-size': 20});
+</script>
+</body>
+</html>
+
