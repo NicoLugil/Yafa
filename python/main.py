@@ -34,7 +34,7 @@ def main():
         print "MCU OK!"
         # TODO: send some info or so
       else:
-        print "MCU error: unexpexted response"
+        print "MCU error: unexpected response"
         print myComm.read_ID,myComm.read_command,myComm.read_value
         # TODO: error and use UnExp! from MCU side
         exit(1)
