@@ -25,6 +25,8 @@ import private.pw
 import email
 import feedparser
 from email.utils import parseaddr
+import pprint
+import time
 
 def GetMail():
    msg=""
@@ -35,6 +37,11 @@ def GetMail():
    PROTO="https://"
    SERVER="mail.google.com"
    PATH="/gmail/feed/atom"
+
+   # TODO/ handle better when unable to login (then fullcount is not found)
+   #print(feedparser.parse(PROTO + USERNAME + ":" + PASSWORD + "@" + SERVER + PATH))
+   #print(feedparser.parse(PROTO + USERNAME + ":" + PASSWORD + "@" + SERVER + PATH)['feed'])
+   #time.sleep(5)
 
    n_email = int(feedparser.parse(PROTO + USERNAME + ":" + PASSWORD + "@" + SERVER + PATH)["feed"]["fullcount"])
    if n_email > 0:

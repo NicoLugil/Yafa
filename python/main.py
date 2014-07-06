@@ -11,6 +11,7 @@ from BridgeComm import BridgeComm
 from ParseSettings import ParseSettings
 from TimedActions import TimedActions
 from GetMail import GetMail
+from FtpStuff import directory_exists
 import private.pw
 
 GetMail()
@@ -34,7 +35,7 @@ def main():
         print "MCU OK!"
         # TODO: send some info or so
       else:
-        print "MCU error: unexpected response"
+        print "MCU error: unexpexted response"
         print myComm.read_ID,myComm.read_command,myComm.read_value
         # TODO: error and use UnExp! from MCU side
         exit(1)
@@ -104,9 +105,17 @@ def main():
           ftp.login(private.pw.myFtpUser,private.pw.myFtpPass)
           ftp.cwd("www.homebrew.be/Yafa")
           if my_cnt==0:
+              if directory_exists(mySettings.name,ftp):
+                  print "dir",mySettings.name,"exists"
+              else:
+                  print "dir",mySettings.name, "does not exist - creating it"
+                  ftp.mkd(mySettings.name)
+              ftp.cwd(mySettings.name)
+              ftp.storbinary("STOR index.html",open("index.html","r"))
               ftp.storlines("STOR dat.csv",myFileIO)
               my_cnt=1
           else:
+              ftp.cwd(mySettings.name)
               ftp.storlines("APPE dat.csv",myFileIO)
           ftp.close()
           myFileIO.close()
