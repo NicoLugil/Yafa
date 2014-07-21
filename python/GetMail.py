@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2014 Nico Lugil 
+# Copyright 2014 Nico Lugil <nico at lugil dot be>
 #
 # This file is part of Yafa!
 #
@@ -15,9 +15,8 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+# along with Yafa. If not, see <http://www.gnu.org/licenses/>.
 
-# contact me at nico at lugil dot be 
 
 import sys
 import imaplib
@@ -27,8 +26,11 @@ import feedparser
 from email.utils import parseaddr
 import pprint
 import time
+from SendMail import SendMail
+import logging
+import logging.handlers
 
-def GetMail():
+def GetMail(my_logger):
    msg=""
    USERNAME = private.pw.myMailUser
    PASSWORD = private.pw.myMailPass
@@ -43,11 +45,21 @@ def GetMail():
    #print(feedparser.parse(PROTO + USERNAME + ":" + PASSWORD + "@" + SERVER + PATH)['feed'])
    #time.sleep(5)
 
-   n_email = int(feedparser.parse(PROTO + USERNAME + ":" + PASSWORD + "@" + SERVER + PATH)["feed"]["fullcount"])
+   try:
+    f = feedparser.parse(PROTO + USERNAME + ":" + PASSWORD + "@" + SERVER + PATH)
+    if f.bozo:
+        raise f.bozo_exception
+    n_email = int(f["feed"]["fullcount"])
+   except (KeyError, bozo_exception) as e:
+    template = "An exception of type {0} occured. Arguments:\n{1!r}"
+    message = template.format(type(e).__name__, e.args)
+    my_logger.debug(str(message))
+    SendMail("nico@lugil.be","Yun Exception",str(message))
+    n_email=0
    if n_email > 0:
-      print "New mail!"
+      my_logger.debug("New mail!")
    else:
-      print "No new mail!"
+      my_logger.debug("No new mail!")
       return (False, msg)
 
    imap_server = imaplib.IMAP4_SSL("imap.gmail.com",993)
@@ -66,9 +78,9 @@ def GetMail():
       #f.close()
       email_msg = email.message_from_string(raw_email)
       whofrom = email_msg.get_all('from', [])
-      print whofrom[0]
+      my_logger.debug(whofrom[0])
       realname,mailaddr=email.utils.parseaddr(whofrom[0])
-      print "here it is",mailaddr,"ok",realname,"rr"
+      #print "here it is",mailaddr,"ok",realname,"rr"
       for part in email_msg.walk():
           # each part is a either non-multipart, or another multipart message
           # that contains further parts... Message is organized like a tree
