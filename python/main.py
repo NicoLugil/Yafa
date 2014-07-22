@@ -49,7 +49,7 @@ def main():
       SendMail("nico@lugil.be","Yun start","I started")
 
       mySettings = ParseSettings()
-      mySettings.parse()
+      mySettings.parse(my_logger)
       
       # reset mcu and establish connection
       my_logger.debug("resetting mcu now")            
@@ -57,7 +57,7 @@ def main():
       time.sleep(5)         
       myComm = BridgeComm()
       myComm.send("Init?","-")
-      if myComm.wait_for_new_msg(10):
+      if myComm.wait_for_new_msg(10,my_logger):
          if myComm.read_command=="Init!":
            my_logger.debug("MCU OK!")
            # TODO: send some info or so
@@ -89,16 +89,16 @@ def main():
              myFileIO = StringIO.StringIO()
              myComm.send("Temp?","-")
              #if myComm.check_new_msg():
-             if myComm.wait_for_new_msg(10):
+             if myComm.wait_for_new_msg(10,my_logger):
                 my_logger.debug("New Temp received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))
                 # TODO: check response comand!!!
                 temp=myComm.read_value
              myComm.send("CO2?","-")
-             if myComm.wait_for_new_msg(10):
+             if myComm.wait_for_new_msg(10,my_logger):
                 my_logger.debug("New CO2 pulses received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))
                 pulses=myComm.read_value
              myComm.send("Act?","-")
-             if myComm.wait_for_new_msg(10):
+             if myComm.wait_for_new_msg(10,my_logger):
                 my_logger.debug("New Act values received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))
                 cool_on=int(myComm.read_value) & 1023
                 my_logger.debug("cool_on={0}".format(cool_on))

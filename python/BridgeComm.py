@@ -1,9 +1,25 @@
-# Author: Nico Lugil
-# TODO: some more text here + some license stuff
+# Copyright 2014 Nico Lugil <nico at lugil dot be>
+#
+# This file is part of Yafa!
+#
+# Yafa! is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Yafa! is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Yafa. If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 import string
 import time
+import logging
+import logging.handlers
 
 sys.path.insert(0, '/usr/lib/python2.7/bridge/') 
 from bridgeclient import BridgeClient as bridgeclient
@@ -46,7 +62,7 @@ class BridgeComm:
             return True
     # checks for new msg (with timeout in seconds)
     # returns true if new msg, false if timed out
-    def wait_for_new_msg(self,timeout):
+    def wait_for_new_msg(self,timeout,my_logger):
          ok=False
          start=time.time();
          while True:
@@ -56,7 +72,7 @@ class BridgeComm:
             now=time.time()
             if (now-start) > timeout:
                break
-            print "sleep"
+            my_logger.debug("sleep")
             time.sleep(0.5)
          return ok
 

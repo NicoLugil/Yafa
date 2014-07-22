@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2014 Nico Lugil 
+# Copyright 2014 Nico Lugil <nico at lugil dot be>
 #
 # This file is part of Yafa!
 #
@@ -15,9 +15,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
-
-# contact me at nico at lugil dot be 
+# along with Yafa. If not, see <http://www.gnu.org/licenses/>.
 
 from ftplib import FTP
 
