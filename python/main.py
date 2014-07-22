@@ -26,6 +26,7 @@ from subprocess import call
 import StringIO
 import logging
 import logging.handlers
+from shutil import copyfile
 
 from BridgeComm import BridgeComm
 from ParseSettings import ParseSettings
@@ -147,7 +148,7 @@ def main():
       my_logger.debug("----")
       my_logger.debug(str(message))
       my_logger.debug("----")
-      copyfile("tmp/Yafa.log","/mnt/sda1/arduino/Yafa.log")
+      copyfile("/tmp/Yafa.log","/mnt/sda1/arduino/Yafa.log")
       SendMail("nico@lugil.be","Yun Exception",str(message))
       raise
     my_logger.debug("end")

@@ -48,9 +48,11 @@ def GetMail(my_logger):
    try:
     f = feedparser.parse(PROTO + USERNAME + ":" + PASSWORD + "@" + SERVER + PATH)
     if f.bozo:
-        raise f.bozo_exception
-    n_email = int(f["feed"]["fullcount"])
-   except (KeyError, bozo_exception) as e:
+        #todo: raise error (bozo_expception?)
+        n_email=0
+    else:
+        n_email = int(f["feed"]["fullcount"])
+   except KeyError as e:
     template = "An exception of type {0} occured. Arguments:\n{1!r}"
     message = template.format(type(e).__name__, e.args)
     my_logger.debug(str(message))

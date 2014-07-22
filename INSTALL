@@ -26,6 +26,8 @@ cd /mnt/sda1/arduino/Yafa
 touch /tmp/end
 exit 0
 
+final version: also comment out wifi-live-or-reset
+
 cp Yafa/python/* to /mnt/sda1/arduino/Yafa
 
 mkdir private, in this dir make:
