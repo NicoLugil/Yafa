@@ -35,6 +35,7 @@ from GetMail import GetMail
 from FtpStuff import directory_exists
 from SendMail import SendMail
 import private.pw
+import lib.pythonping
 
 
 def main():
@@ -73,6 +74,7 @@ def main():
       
       timer_log = TimedActions(301)
       timer_mail = TimedActions(61)
+      timer_checkwifi = TimedActions(30)
       
       
       my_cnt=0
@@ -80,6 +82,12 @@ def main():
       perc_heat=0.
       while True:
          time.sleep(10)
+         if timer_checkwifi.enough_time_passed():
+             ping_delay = lib.pythonping.do_one("192.168.1.1",5)  
+             if ping_delay is None:
+                  SendMail("nico@lugil.be","Wifi lost","Wifi lost")
+                  call(["wifi"])
+                  time.sleep(20)
          if timer_mail.enough_time_passed():
             new_mail, msg = GetMail(my_logger)
             if new_mail:
@@ -150,7 +158,7 @@ def main():
       my_logger.debug("----")
       copyfile("/tmp/Yafa.log","/mnt/sda1/arduino/Yafa.log")
       SendMail("nico@lugil.be","Yun Exception",str(message))
-      raise
+      main()
     my_logger.debug("end")
 
 if __name__ == '__main__':
