@@ -26,6 +26,7 @@ import StringIO
 import logging
 import logging.handlers
 from shutil import copyfile
+import glob,os 
 
 from TimedActions import TimedActions
 import lib.pythonping
@@ -39,25 +40,37 @@ def copylog():
       # only copy last part
       copyfile("/tmp/wifiMonitor.log","/mnt/sda1/arduino/wifiMonitor_"+now()+".log")
 
+def wifi_down_up():
+      call(["wifi","down"], stdout=open(os.devnull, 'wb'))
+      time.sleep(5)
+      call("wifi", stdout=open(os.devnull, 'wb'))
+      time.sleep(5)
+
 def runit():
+     
+  filelist=glob.glob('/tmp/wifiMonitor.*') 
+  for f in filelist: 
+     #print "removing " + str(f)
+     os.remove(f) 
+  time.sleep(5)
+
+  my_logger = logging.getLogger('MyLogger')
+  my_logger.setLevel(logging.DEBUG)
+  handler = logging.handlers.RotatingFileHandler("/tmp/wifiMonitor.log", maxBytes=4096, backupCount=4)
+  my_logger.addHandler(handler)
+
+  timer_checkwifi = TimedActions(61)  # check every 1+ min 
+  timer_cp2SD = TimedActions(900) # copy last part of log to SD every 15 min
+
+  n_ok=0
+  n_err=0
+  starttime=datetime.datetime.now()
+
   while True:
     try:
-      # configure logging
-      my_logger = logging.getLogger('MyLogger')
-      my_logger.setLevel(logging.DEBUG)
-      handler = logging.handlers.RotatingFileHandler("/tmp/wifiMonitor.log", maxBytes=4096, backupCount=4)
-      my_logger.addHandler(handler)
-      my_logger.debug("{0} : wifiMonitor started".format(now()))
-      call(["wifi down && sleep 5 && wifi"])
-      my_logger.debug("{0} : wifi turned off/on".format(now()))
-      #copylog()                     
 
-      timer_checkwifi = TimedActions(61)  # check every 1+ min 
-      timer_cp2SD = TimedActions(900) # copy last part of log to SD every 15 min
-
-      n_ok=0
-      n_err=0
-      starttime=datetime.datetime.now()
+      wifi_down_up()
+      my_logger.debug("{0} : wifiMonitor (re)started".format(now()))
 
       while True:
          time.sleep(5)
@@ -66,8 +79,8 @@ def runit():
              if ping_delay is None:
                   n_err=n_err+1
                   my_logger.debug("{0} : wifi lost".format(now()))
-                  call(["wifi down && sleep 5 && wifi"])
-                  time.sleep(15)  # just give it some more time to establish connection 
+                  wifi_down_up()
+                  time.sleep(15)  # give it some more time to establish connection 
                   starttime=datetime.datetime.now()
              else:
                   n_ok=n_ok+1
@@ -79,10 +92,12 @@ def runit():
       my_logger.debug("--- Exception caught ---")
       template = "{2} : An exception of type {0} occured. Arguments:\n{1!r}"
       message = template.format(type(e).__name__, e.args, now())
+      print message
       my_logger.debug(str(message))
       my_logger.debug("----")
-      #copylog()                     
-      #time.sleep(65) # go to another minute
+      copylog()                     
+      time.sleep(3)
+      #break
 
 if __name__ == '__main__':
       runit()
