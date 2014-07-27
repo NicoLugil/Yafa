@@ -39,12 +39,10 @@ import lib.pythonping
 
 
 def main():
-    try: 
-
       # configure logging
       my_logger = logging.getLogger('MyLogger')
       my_logger.setLevel(logging.DEBUG)
-      handler = logging.handlers.RotatingFileHandler("/tmp/Yafa.log", maxBytes=2048, backupCount=2)
+      handler = logging.handlers.RotatingFileHandler("/tmp/Yafa.log", maxBytes=16384, backupCount=2)
       my_logger.addHandler(handler)
         
       SendMail("nico@lugil.be","Yun start","I started")
@@ -81,6 +79,7 @@ def main():
       perc_cool=0.
       perc_heat=0.
       while True:
+        try: 
          time.sleep(10)
          if timer_checkwifi.enough_time_passed():
              ping_delay = lib.pythonping.do_one("192.168.1.1",5)  
@@ -136,13 +135,13 @@ def main():
              ftp.cwd("www.homebrew.be/Yafa")
              if my_cnt==0:
                  if directory_exists(mySettings.name,ftp):
-                     my_logger.debug("dir" + str(mySettings.name) + "exists")
+                     my_logger.debug("dir " + str(mySettings.name) + " exists")
                  else:
-                     my_logger.debug("dir" + str(mySettings.name) + "does not exist - creating it")
+                     my_logger.debug("dir " + str(mySettings.name) + " does not exist - creating it")
                      ftp.mkd(mySettings.name)
                  ftp.cwd(mySettings.name)
                  ftp.storbinary("STOR index.html",open("index.html","r"))
-                 ftp.storlines("STOR dat.csv",myFileIO)
+                 ftp.storlines("APPE dat.csv",myFileIO)
                  my_cnt=1
              else:
                  ftp.cwd(mySettings.name)
@@ -150,16 +149,14 @@ def main():
              ftp.close()
              myFileIO.close()
              sys.stdout.flush()
-    except Exception as e:
-      template = "An exception of type {0} occured. Arguments:\n{1!r}"
-      message = template.format(type(e).__name__, e.args)
-      my_logger.debug("----")
-      my_logger.debug(str(message))
-      my_logger.debug("----")
-      copyfile("/tmp/Yafa.log","/mnt/sda1/arduino/Yafa.log")
-      SendMail("nico@lugil.be","Yun Exception",str(message))
-      main()
-    my_logger.debug("end")
+        except Exception as e:
+          template = "An exception of type {0} occured. Arguments:\n{1!r}"
+          message = template.format(type(e).__name__, e.args)
+          my_logger.debug("----")
+          my_logger.debug(str(message))
+          my_logger.debug("----")
+          copyfile("/tmp/Yafa.log","/mnt/sda1/arduino/Yafa.log")
+          #SendMail("nico@lugil.be","Yun Exception",str(message))
 
 if __name__ == '__main__':
        main()
