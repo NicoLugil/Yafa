@@ -10,10 +10,10 @@
 #include "DallasTemperature.h"
 #include "settings.h"
 
-#define PIN_CO2 2
-#define PIN_TEMP 10
-#define PIN_COOL 7
-#define PIN_HEAT 5
+#define PIN_CO2 10
+#define PIN_TEMP 12
+#define PIN_COOL 9
+#define PIN_HEAT 8
 
 TKRelay Cool(PIN_COOL);
 TKRelay Heat(PIN_HEAT);
@@ -32,11 +32,16 @@ unsigned long last_tmp_meas_time;
 float temp_measured;
 float get_temp()
 {
+   unsigned long s1;
+   s1=millis();
    sensors.requestTemperatures();
    temp_measured = sensors.getTempCByIndex(0);
    last_tmp_meas_time=millis();
    Console.print("temp measured=");
-   Console.println(temp_measured);
+   Console.print(temp_measured);
+   Console.print(" took ");
+   Console.print(last_tmp_meas_time-s1);
+   Console.println(" millis");
    return temp_measured;
 }
 

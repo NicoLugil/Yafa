@@ -29,7 +29,7 @@ class ParseSettings:
     name='noname'
     temp=20.0
     def parse(self,my_logger):
-       tree = ET.ElementTree(file='settings.xml')
+       tree = ET.ElementTree(file='/mnt/sda1/arduino/Yafa/settings.xml')
        for elem in tree.iter(tag='name'):
           my_logger.debug("{0} {1}".format(elem.tag,elem.text))
           self.name = elem.text
