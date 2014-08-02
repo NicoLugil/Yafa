@@ -20,12 +20,9 @@
 from ftplib import FTP
 
 def directory_exists(the_dir, ftp_object):
-        filelist = []
-        ftp_object.retrlines('LIST',filelist.append)
-        for f in filelist:
-            if f.split()[-1] == the_dir and f.upper().startswith('D'):
-                   return True
-        return False
-
-
-
+    filelist = []
+    ftp_object.retrlines('LIST',filelist.append)
+    for f in filelist:
+        if f.split()[-1] == the_dir and f.upper().startswith('D'):
+            return True
+    return False

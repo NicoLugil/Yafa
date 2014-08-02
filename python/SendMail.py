@@ -45,7 +45,7 @@ class SendMail:
                 toSend_copy = toSend
                 for index, item in enumerate(toSend):
                     msg = MIMEText(item[2])
-                    msg['Subject'] = item[1] 
+                    msg['Subject'] = item[1]
                     msg['From'] = USERNAME
                     msg['To'] = item[0]
                     server.sendmail(USERNAME, item[0], msg.as_string())
@@ -61,6 +61,5 @@ class SendMail:
             self.timer.reset_timer()
     def SendNewMail(self,tto,subject,body):
             # TODO: max size
-            self.toSend += (tto, subject, body)
-            SendPendingMail()
-        
+        self.toSend += (tto, subject, body)
+        SendPendingMail()
