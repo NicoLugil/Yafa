@@ -31,11 +31,11 @@ class TimedActions:
     def enough_time_passed(self):
         if not self.did_run:
             self.did_run=True
-            reset_timer()
+            self.reset_timer()
             return True
         else:
             if (time.time()-self.last_time)>self.iv:
-                reset_timer()
+                self.reset_timer()
                 return True
             else:
                 return False

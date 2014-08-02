@@ -47,4 +47,4 @@ class ParseSettings:
     def parse_file(self,filename,my_logger):
         with open (filename, "r") as myfile:
             text=myfile.read()
-            parse_string(text,my_logger)
+            self.parse_string(text,my_logger)

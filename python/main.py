@@ -36,7 +36,7 @@ from FtpStuff import directory_exists
 import SendMail
 import private.pw
 import lib.pythonping
-import ExceptionHandler
+#import ExceptionHandler
 
 # some defines
 SETTINGS_FILE = "/mnt/sda1/arduino/Yafa/settings.xml"

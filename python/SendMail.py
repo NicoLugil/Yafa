@@ -62,4 +62,4 @@ class SendMail:
     def SendNewMail(self,tto,subject,body):
             # TODO: max size
         self.toSend += (tto, subject, body)
-        SendPendingMail()
+        self.SendPendingMail()
