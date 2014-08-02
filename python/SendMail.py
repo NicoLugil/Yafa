@@ -20,22 +20,47 @@
 import smtplib
 from email.mime.text import MIMEText
 import private.pw
+from TimedActions import TimedActions
 
-def SendMail(tto, subject, body):
-    USERNAME = private.pw.myMailUser
-    PASSWORD = private.pw.myMailPass
-    
-    #msg = MIMEText('2nd mail Hello,\nMy name is Yun, \nhow are you')
-    msg = MIMEText(body)
-    msg['Subject'] = subject
-    msg['From'] = USERNAME
-    msg['To'] = tto
-    
-    server = smtplib.SMTP('smtp.gmail.com:587')
-    server.ehlo_or_helo_if_needed()
-    server.starttls()
-    server.ehlo_or_helo_if_needed()
-    server.login(USERNAME,PASSWORD)
-    server.sendmail(USERNAME, tto, msg.as_string())
-    server.quit()
-    
+class SendMail:
+    def __init__(self):
+        self.toSend = []
+        self.timer = TimedActions(0);
+    def PendingMailsToSend(self):
+        if len(self.toSend) != 0:
+            return True
+        else:
+            return False
+    def SendPendingMail(self):
+        try:
+            if self.timer.enough_time_passed():
+                self.time.set_interval(0)
+                USERNAME = private.pw.myMailUser
+                PASSWORD = private.pw.myMailPass
+                server = smtplib.SMTP('smtp.gmail.com:587')
+                server.ehlo_or_helo_if_needed()
+                server.starttls()
+                server.ehlo_or_helo_if_needed()
+                server.login(USERNAME,PASSWORD)
+                toSend_copy = toSend
+                for index, item in enumerate(toSend):
+                    msg = MIMEText(item[2])
+                    msg['Subject'] = item[1] 
+                    msg['From'] = USERNAME
+                    msg['To'] = item[0]
+                    server.sendmail(USERNAME, item[0], msg.as_string())
+                    toSend_copy.remove(item)
+                server.quit()
+                self.toSend = toSend_copy
+                if len(self.toSend) != 0:
+                    self.toSend = []
+                    raise Exception("Unexpected len(self.toSend) != 0 in SendMail")
+        except Exception as e:
+            # didnt manage to send all mails - put timer and hope when timer end all works
+            self.timer.set_interval(120)
+            self.timer.reset_timer()
+    def SendNewMail(self,tto,subject,body):
+            # TODO: max size
+            self.toSend += (tto, subject, body)
+            SendPendingMail()
+        

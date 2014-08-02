@@ -36,19 +36,24 @@ from FtpStuff import directory_exists
 from SendMail import SendMail
 import private.pw
 import lib.pythonping
-
+import ExceptionHandler
 
 def main():
-      # configure logging
-      my_logger = logging.getLogger('MyLogger')
-      my_logger.setLevel(logging.DEBUG)
-      handler = logging.handlers.RotatingFileHandler("/tmp/Yafa.log", maxBytes=16384, backupCount=2)
-      my_logger.addHandler(handler)
+
+
+
+    try:
+        my_logger = logging.getLogger('MyLogger')
+        my_logger.setLevel(logging.DEBUG)
+        handler = logging.handlers.RotatingFileHandler("/tmp/Yafa.log", maxBytes=16384, backupCount=2)
+        my_logger.addHandler(handler)
+    except Exception as e:
+        pass
         
       SendMail("nico@lugil.be","Yun start","I started")
 
       mySettings = ParseSettings()
-      mySettings.parse(my_logger)
+      mySettings.parse_file("/mnt/sda1/arduino/Yafa/settings.xml",my_logger)
       
       # reset mcu and establish connection
       my_logger.debug("resetting mcu now")            
@@ -92,6 +97,8 @@ def main():
             if new_mail:
                my_logger.debug(msg)
                sys.stdout.flush()
+               mySettings.parse_string(msg,my_logger)
+               # todo: write xml file if can be parsed succesfully
          if timer_log.enough_time_passed():
              myFileIO = StringIO.StringIO()
              myComm.send("Temp?","-")
@@ -140,8 +147,11 @@ def main():
                      my_logger.debug("dir " + str(mySettings.name) + " does not exist - creating it")
                      ftp.mkd(mySettings.name)
                  ftp.cwd(mySettings.name)
-                 ftp.storbinary("STOR index.html",open("index.html","r"))
-                 ftp.storlines("APPE dat.csv",myFileIO)
+                 ftp.storbinary("STOR index.html",open("/mnt/sda1/arduino/Yafa/index.html","r"))
+                 if mySettings.clear:
+                    ftp.storlines("STOR dat.csv",myFileIO)
+                 else:
+                    ftp.storlines("APPE dat.csv",myFileIO)
                  my_cnt=1
              else:
                  ftp.cwd(mySettings.name)

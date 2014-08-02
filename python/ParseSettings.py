@@ -25,16 +25,30 @@ import logging.handlers
 # THIS IS FAR FROM FINISHED: NO ERROR CHECKING, VERY BASIC, EXPECTS VERY SIMPLE
 # XML STRUCTURE
 
+def str2bool(v):
+      return v.lower() in ("yes", "true", "t", "1")
+
 class ParseSettings:
     name='noname'
     temp=20.0
-    def parse(self,my_logger):
-       tree = ET.ElementTree(file='/mnt/sda1/arduino/Yafa/settings.xml')
+    clear=False
+    def parse_string(self,text,my_logger):
+       tree = ET.ElementTree(ET.fromstring(text))
        for elem in tree.iter(tag='name'):
           my_logger.debug("{0} {1}".format(elem.tag,elem.text))
           self.name = elem.text
        for elem in tree.iter(tag='temp'):
           my_logger.debug("{0} {1}".format(elem.tag,elem.text))
           self.temp = elem.text
+       for elem in tree.iter(tag='clear'):
+          my_logger.debug("{0} {1}".format(elem.tag,elem.text))
+          self.clear = str2bool(elem.text)
+    def parse_file(self,filename,my_logger):
+        with open (filename, "r") as myfile:
+                text=myfile.read()
+                parse_string(text,my_logger)
+
+
+
 
 
