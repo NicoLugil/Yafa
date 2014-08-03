@@ -34,9 +34,9 @@ from TimedActions import TimedActions
 from GetMail import GetMail
 from FtpStuff import directory_exists
 from SendMail import SendMail
+from ExceptionHandler import ExceptionHandler
 import private.pw
 import lib.pythonping
-#import ExceptionHandler
 
 # some defines
 SETTINGS_FILE = "/mnt/sda1/arduino/Yafa/settings.xml"
@@ -65,6 +65,8 @@ def main():
     except Exception as e:
         # TODO: if this doesnt work: make sure user gets informed
         raise
+
+    my_exc_handler = ExceptionHandler(10,"main")
 
     # reset mcu and establish connection
     my_logger.debug("resetting mcu now")
@@ -171,9 +173,7 @@ def main():
                 sys.stdout.flush()
                 my_SendMail.SendPendingMail(my_logger) # TODO: do less often
         except Exception as e:
-            template = "An exception of type {0} occured. Arguments:\n{1!r}"
-            message = template.format(type(e).__name__, e.args)
-            my_logger.debug("-----\n" + str(message) + "-----\n")
+            my_exc_handler.log_exception(e,my_logger,my_SendMail)
             #copyfile("/tmp/Yafa.log","/mnt/sda1/arduino/Yafa.log")
             #SendMail("nico@lugil.be","Yun Exception",str(message))
 

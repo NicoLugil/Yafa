@@ -26,11 +26,8 @@ import string
 import time
 import logging
 import logging.handlers
+import SendMail
 
-def log_exception(e,my_logger):
-    template = "An exception of type {0} occured. Arguments:\n{1!r}"
-    message = template.format(type(e).__name__, e.args)
-    my_logger.error(str(message))
 
 ## just an exception with a method that returns
 ## some special members (if given)
@@ -41,9 +38,24 @@ def log_exception(e,my_logger):
 #    pass
 #
 #
-#class ExceptionHandler:
-#    def __init__(self):
-#        pass
-#    def HandleIt(self,myException):
-#        pass
+
+
+class ExceptionHandler:
+    def __init__(self,max_exc_mail,name):
+        self.n_exc=0
+        self.max_exc_mail = max_exc_mail
+        self.name = name
+    def log_exception(self,e,my_logger,my_sendmail):
+        template = "An exception of type {0} occured. Arguments:\n{1!r}"
+        message = template.format(type(e).__name__, e.args)
+        my_logger.error(str(message))
+        if self.n_exc<self.max_exc_mail:
+            self.n_exc = self.n_exc+1
+            my_sendmail.SendNewMail("nico@lugil.be",self.name+":Yafa exception - "+str(self.n_exc),str(message),my_logger)
+        else:
+            if self.n_exc==self.max_exc_mail:
+                self.n_exc = self.n_exc+1
+                my_sendmail.SendNewMail("nico@lugil.be",self.name+":Yafa exception limit for mail","Maximum number of exceptions to mail reached",my_logger)
+
+
 

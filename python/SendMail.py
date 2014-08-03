@@ -18,15 +18,17 @@
 # along with Yafa. If not, see <http://www.gnu.org/licenses/>.
 
 import smtplib
+import time
 from email.mime.text import MIMEText
 import private.pw
 from TimedActions import TimedActions
-import ExceptionHandler
+from ExceptionHandler import ExceptionHandler
 
 class SendMail:
     def __init__(self):
         self.toSend = []
         self.timer = TimedActions(0);
+        self.exc_handler = ExceptionHandler(10,"SendMail")
     def PendingMailsToSend(self):
         if len(self.toSend) != 0:
             return True
@@ -62,14 +64,13 @@ class SendMail:
                 my_logger.debug("   waiting for timer to end, time remaining={0}s".format(self.timer.get_remaining_time()))
         except Exception as e:
             # didnt manage to send all mails - put timer and hope when timer end all works
-            ExceptionHandler.log_exception(e,my_logger)
+            self.exc_handler.log_exception(e,my_logger,self)
             self.timer.set_interval(120)
             self.timer.reset_timer()
     def SendNewMail(self,tto,subject,body,my_logger):
         # TODO: max size
         tup = (tto, subject, body)
         self.toSend.append(tup)
-        #print self.toSend
         self.SendPendingMail(my_logger)
 
 
