@@ -33,7 +33,7 @@ from ParseSettings import ParseSettings
 from TimedActions import TimedActions
 from GetMail import GetMail
 from FtpStuff import directory_exists
-import SendMail
+from SendMail import SendMail
 import private.pw
 import lib.pythonping
 #import ExceptionHandler
@@ -47,13 +47,15 @@ def main():
         my_logger = logging.getLogger('MyLogger')
         my_logger.setLevel(logging.DEBUG)
         handler = logging.handlers.RotatingFileHandler("/tmp/Yafa.log", maxBytes=16384, backupCount=2)
+        formatter = logging.Formatter("%(asctime)s : %(levelname)s - %(message)s","%Y-%m-%d %H:%M:%S")
+        handler.setFormatter(formatter)
         my_logger.addHandler(handler)
     except Exception as e:
         raise
 
     try:
-        my_SendMail = SendMail.SendMail()
-        my_SendMail.SendNewMail("nico@lugil.be","Yun start","I started")
+        my_SendMail = SendMail()
+        my_SendMail.SendNewMail("nico@lugil.be","Yun start","I started",my_logger)
     except Exception as e:
         raise
 
@@ -167,14 +169,12 @@ def main():
                 ftp.close()
                 myFileIO.close()
                 sys.stdout.flush()
-            my_SendMail.SendPendingMail()
+                my_SendMail.SendPendingMail(my_logger) # TODO: do less often
         except Exception as e:
             template = "An exception of type {0} occured. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)
-            my_logger.debug("----")
-            my_logger.debug(str(message))
-            my_logger.debug("----")
-            copyfile("/tmp/Yafa.log","/mnt/sda1/arduino/Yafa.log")
+            my_logger.debug("-----\n" + str(message) + "-----\n")
+            #copyfile("/tmp/Yafa.log","/mnt/sda1/arduino/Yafa.log")
             #SendMail("nico@lugil.be","Yun Exception",str(message))
 
 if __name__ == '__main__':

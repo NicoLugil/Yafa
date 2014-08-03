@@ -28,6 +28,12 @@ class TimedActions:
         self.iv=interval;
     def reset_timer(self):
         self.last_time=time.time()
+    def get_remaining_time(self):
+        time_passed = (time.time()-self.last_time)
+        if time_passed >= self.iv:
+            return 0
+        else:
+            return (self.iv-time_passed)
     def enough_time_passed(self):
         if not self.did_run:
             self.did_run=True

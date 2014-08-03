@@ -21,6 +21,7 @@ import smtplib
 from email.mime.text import MIMEText
 import private.pw
 from TimedActions import TimedActions
+import ExceptionHandler
 
 class SendMail:
     def __init__(self):
@@ -31,10 +32,12 @@ class SendMail:
             return True
         else:
             return False
-    def SendPendingMail(self):
+    def SendPendingMail(self,my_logger):
         try:
+            my_logger.debug("SendPendingMail:")
             if self.timer.enough_time_passed():
-                self.time.set_interval(0)
+                my_logger.debug("   timer OK!")
+                self.timer.set_interval(0)
                 USERNAME = private.pw.myMailUser
                 PASSWORD = private.pw.myMailPass
                 server = smtplib.SMTP('smtp.gmail.com:587')
@@ -42,8 +45,8 @@ class SendMail:
                 server.starttls()
                 server.ehlo_or_helo_if_needed()
                 server.login(USERNAME,PASSWORD)
-                toSend_copy = toSend
-                for index, item in enumerate(toSend):
+                toSend_copy = self.toSend
+                for index, item in enumerate(self.toSend):
                     msg = MIMEText(item[2])
                     msg['Subject'] = item[1]
                     msg['From'] = USERNAME
@@ -55,11 +58,20 @@ class SendMail:
                 if len(self.toSend) != 0:
                     self.toSend = []
                     raise Exception("Unexpected len(self.toSend) != 0 in SendMail")
+            else: 
+                my_logger.debug("   waiting for timer to end, time remaining={0}s".format(self.timer.get_remaining_time()))
         except Exception as e:
             # didnt manage to send all mails - put timer and hope when timer end all works
+            ExceptionHandler.log_exception(e,my_logger)
             self.timer.set_interval(120)
             self.timer.reset_timer()
-    def SendNewMail(self,tto,subject,body):
-            # TODO: max size
-        self.toSend += (tto, subject, body)
-        self.SendPendingMail()
+    def SendNewMail(self,tto,subject,body,my_logger):
+        # TODO: max size
+        tup = (tto, subject, body)
+        self.toSend.append(tup)
+        #print self.toSend
+        self.SendPendingMail(my_logger)
+
+
+
+
