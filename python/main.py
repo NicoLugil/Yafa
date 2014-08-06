@@ -45,7 +45,7 @@ def main():
 
     try:
         my_logger = logging.getLogger('MyLogger')
-        my_logger.setLevel(logging.DEBUG)
+        my_logger.setLevel(logging.ERROR)
         handler = logging.handlers.RotatingFileHandler("/tmp/Yafa.log", maxBytes=16384, backupCount=2)
         formatter = logging.Formatter("%(asctime)s : %(levelname)s - %(message)s","%Y-%m-%d %H:%M:%S")
         handler.setFormatter(formatter)
@@ -105,7 +105,11 @@ def main():
                     call(["wifi"])
                     time.sleep(20)
             if timer_mail.enough_time_passed():
-                new_mail, msg = GetMail(my_logger)
+                try:
+                    new_mail, msg = GetMail(my_logger)
+                except Exception as e:
+                    e.args += ('happened while trying to GetMail',)
+                    raise
                 if new_mail:
                     my_logger.debug(msg)
                     sys.stdout.flush()
@@ -149,26 +153,30 @@ def main():
                 myFileIO.write(",")
                 myFileIO.write(str(avg_act))
                 myFileIO.seek(0)
-                ftp=FTP("ftp.homebrew.be")
-                ftp.login(private.pw.myFtpUser,private.pw.myFtpPass)
-                ftp.cwd("www.homebrew.be/Yafa")
-                if my_cnt==0:
-                    if directory_exists(mySettings.name,ftp):
-                        my_logger.debug("dir " + str(mySettings.name) + " exists")
+                try:
+                    ftp=FTP("ftp.homebrew.be")
+                    ftp.login(private.pw.myFtpUser,private.pw.myFtpPass)
+                    ftp.cwd("www.homebrew.be/Yafa")
+                    if my_cnt==0:
+                        if directory_exists(mySettings.name,ftp):
+                            my_logger.debug("dir " + str(mySettings.name) + " exists")
+                        else:
+                            my_logger.debug("dir " + str(mySettings.name) + " does not exist - creating it")
+                            ftp.mkd(mySettings.name)
+                        ftp.cwd(mySettings.name)
+                        ftp.storbinary("STOR index.html",open("/mnt/sda1/arduino/Yafa/index.html","r"))
+                        if mySettings.clear:
+                            ftp.storlines("STOR dat.csv",myFileIO)
+                        else:
+                            ftp.storlines("APPE dat.csv",myFileIO)
+                        my_cnt=1
                     else:
-                        my_logger.debug("dir " + str(mySettings.name) + " does not exist - creating it")
-                        ftp.mkd(mySettings.name)
-                    ftp.cwd(mySettings.name)
-                    ftp.storbinary("STOR index.html",open("/mnt/sda1/arduino/Yafa/index.html","r"))
-                    if mySettings.clear:
-                        ftp.storlines("STOR dat.csv",myFileIO)
-                    else:
+                        ftp.cwd(mySettings.name)
                         ftp.storlines("APPE dat.csv",myFileIO)
-                    my_cnt=1
-                else:
-                    ftp.cwd(mySettings.name)
-                    ftp.storlines("APPE dat.csv",myFileIO)
-                ftp.close()
+                    ftp.close()
+                except Exception as e:
+                    e.args += ('happened while trying to ftp',)
+                    raise
                 myFileIO.close()
                 sys.stdout.flush()
                 my_SendMail.SendPendingMail(my_logger) # TODO: do less often
