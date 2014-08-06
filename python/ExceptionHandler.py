@@ -45,17 +45,20 @@ class ExceptionHandler:
         self.n_exc=0
         self.max_exc_mail = max_exc_mail
         self.name = name
+        self.max_reached=False
     def log_exception(self,e,my_logger,my_sendmail):
-        template = "An exception of type {0} occured. Arguments:\n{1!r}"
-        message = template.format(type(e).__name__, e.args)
+        template = "{3}({2}) : An exception of type {0} occured. Arguments:\n{1!r}"
+        message = template.format(type(e).__name__, e.args, self.n_exc,self.name)
         my_logger.error(str(message))
-        if self.n_exc<self.max_exc_mail:
-            self.n_exc = self.n_exc+1
-            my_sendmail.SendNewMail("nico@lugil.be",self.name+":Yafa exception - "+str(self.n_exc),str(message),my_logger)
-        else:
-            if self.n_exc==self.max_exc_mail:
-                self.n_exc = self.n_exc+1
-                my_sendmail.SendNewMail("nico@lugil.be",self.name+":Yafa exception limit for mail","Maximum number of exceptions to mail reached",my_logger)
+        if self.n_exc==self.max_exc_mail:
+            self.max_reached=True
+            #TODO: replace email address
+            my_sendmail.SendNewMail("nico@lugil.be",self.name+":Yafa exception limit for mail","Maximum number of exceptions to mail reached",my_logger)
+        #increment before sending mail, as that action might fail also
+        tmp=self.n_exc
+        self.n_exc = self.n_exc+1  
+        if not self.max_reached:
+            my_sendmail.SendNewMail("nico@lugil.be",self.name+":Yafa exception - "+str(tmp),str(message),my_logger)
 
 
 

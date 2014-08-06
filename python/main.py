@@ -143,7 +143,11 @@ def main():
                         perc_cool =float(0)
                         perc_heat =float(0)
                     avg_act = perc_heat-perc_cool
-                now=datetime.datetime.now()
+                try:
+                    now=datetime.datetime.now()
+                except Exception as e:
+                    e.args += ('happened while trying to get time now',)
+                    raise
                 now_str=now.strftime("%Y-%m-%d %H:%M")
                 myFileIO.write(now_str)
                 myFileIO.write(",")

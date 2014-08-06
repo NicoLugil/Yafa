@@ -71,6 +71,7 @@ class SendMail:
         # TODO: max size
         tup = (tto, subject, body)
         self.toSend.append(tup)
+        print "SendNewMail added to toSend: "+str(tup)+". Total mails to send: "+str(len(self.toSend))+"."
         self.SendPendingMail(my_logger)
 
 
