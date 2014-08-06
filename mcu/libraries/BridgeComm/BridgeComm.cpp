@@ -101,4 +101,10 @@ void BridgeComm::set_tx_value_long(uint32_t v)
    Console.println(tx_value_buff);
 }
 
+float BridgeComm::get_rx_value_as_float()
+{
+   // TODO: better checking
+   float x = atof(rx_value_buff);
+   return x;
+}
 

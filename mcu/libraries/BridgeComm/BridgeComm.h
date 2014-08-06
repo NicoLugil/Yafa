@@ -51,6 +51,10 @@ class BridgeComm
     void set_tx_value(unsigned int v);
     void set_tx_value_long(uint32_t v);
 
+    // gets rx_value as float
+    // TODO: check if parsed ok (think returns 0 if not, but that is a good value also :(
+    float get_rx_value_as_float();
+
   private:
     // I am using the dtostrf function to convert from float --> char array
     // imho this isn't an extremely safe function. For now: put bound on "char before 

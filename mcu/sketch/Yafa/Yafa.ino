@@ -263,6 +263,15 @@ void loop()
          pulses_between_checks=0;
          myBridgeComm.send();
       }
+      if(strcmp(myBridgeComm.rx_command_buff,"setTemp=")==0)
+      {
+         Console.print("must set temp to ");
+         mySettings.desiredTemp=myBridgeComm.get_rx_value_as_float();
+         Console.println(mySettings.desiredTemp);
+         // acknowledge with the parsed temp (approx requested one)
+         strncpy(myBridgeComm.tx_command_buff,"setTemp2",myBridgeComm.COMMAND_LEN);
+         myBridgeComm.set_tx_value(mySettings.desiredTemp);
+      }
       if(strcmp(myBridgeComm.rx_command_buff,"Act?")==0)
       {
          Console.println("actuators request");
