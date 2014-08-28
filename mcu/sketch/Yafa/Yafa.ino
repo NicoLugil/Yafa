@@ -27,23 +27,7 @@ settings mySettings;
 // arrays to hold device address
 DeviceAddress Thermometer;
 
-// todo make class or so
-unsigned long last_tmp_meas_time;
-float temp_measured;
-float get_temp()
-{
-   unsigned long s1;
-   s1=millis();
-   sensors.requestTemperatures();
-   temp_measured = sensors.getTempCByIndex(0);
-   last_tmp_meas_time=millis();
-   Console.print("temp measured=");
-   Console.print(temp_measured);
-   Console.print(" took ");
-   Console.print(last_tmp_meas_time-s1);
-   Console.println(" millis");
-   return temp_measured;
-}
+
 
 // co2 stuff
 int pulses_between_checks;  // only 16 bit, ok?
@@ -81,6 +65,57 @@ uint32_t n_cool_on;
 uint32_t n_heat_on;
 uint32_t n_total;
 
+// Console extension
+// TODO: make class
+bool Console_on;
+
+void ConsPrint(const char d[])
+{
+   if(Console_on)
+   {
+      ConsPrint(d);
+   }
+}
+void ConsPrint(const char d[], int f)
+{
+   if(Console_on)
+   {
+      ConsPrint(d, f);
+   }
+}
+void ConsPrint(int d)
+{
+   if(Console_on)
+   {
+      ConsPrint(d);
+   }
+}
+void ConsPrint(int d, int f)
+{
+   if(Console_on)
+   {
+      ConsPrint(d, f);
+   }
+}
+
+// todo make class or so
+unsigned long last_tmp_meas_time;
+float temp_measured;
+float get_temp()
+{
+   unsigned long s1;
+   s1=millis();
+   sensors.requestTemperatures();
+   temp_measured = sensors.getTempCByIndex(0);
+   last_tmp_meas_time=millis();
+   ConsPrint("temp measured=");
+   ConsPrint(temp_measured);
+   ConsPrint(" took ");
+   ConsPrint(last_tmp_meas_time-s1);
+   ConsPrint(" millis\n");
+   return temp_measured;
+}
+
 void setup() {
    pinMode(PIN_TEMP, INPUT);
    pinMode(PIN_COOL, OUTPUT);
@@ -104,45 +139,49 @@ void setup() {
    }
    myBridgeComm.send();
 
-//   while(!Console)
-//   {
-//   }
-   Console.println("Console started");
+   Console_on=false;
+   unsigned int long t1 = millis();
+   while(!Console && ((millis()-t1<10000))) { }
+   if(Console)
+   {
+      Console_on=true;
+   }
+   ConsPrint("Console started\n");
 
    // locate devices on the bus
-   Console.print("Locating devices...");
+   ConsPrint("Locating devices...");
    sensors.begin();
-   Console.print("Found ");
-   Console.print(sensors.getDeviceCount(), DEC);
-   Console.println(" devices.");
+   ConsPrint("Found ");
+   ConsPrint(sensors.getDeviceCount(), DEC);
+   ConsPrint(" devices.\n");
    // report parasite power reqs
-   Console.print("Parasitic power is: ");
-   if (sensors.isParasitePowerMode()) Console.println("ON");
-   else Console.println("OFF");
+   ConsPrint("Parasitic power is: ");
+   if (sensors.isParasitePowerMode()) ConsPrint("ON\n");
+   else ConsPrint("OFF\n");
    // Method 1:
    // search for devices on the bus and assign based on an index.  ideally,
    // you would do this to initially discover addresses on the bus and then 
    // use those addresses and manually assign them (see above) once you know 
    // the devices on your bus (and assuming they don't change).
-   if (!sensors.getAddress(Thermometer, 0)) Console.println("Unable to find address for Device 0"); 
+   if (!sensors.getAddress(Thermometer, 0)) ConsPrint("Unable to find address for Device 0\n"); 
    // show the addresses we found on the bus
-   Console.print("Device 0 Address: ");
+   ConsPrint("Device 0 Address: ");
    printAddress(Thermometer);
-   Console.println();
+   ConsPrint("\n");
 
    uint8_t res=sensors.getResolution(Thermometer);
-   Console.print("Device 0 Resolution: ");
-   Console.print(res, DEC); 
-   Console.println();
+   ConsPrint("Device 0 Resolution: ");
+   ConsPrint(res, DEC); 
+   ConsPrint("\n");
    if(res!=12)
    {
       // set the resolution to 12 bit (Each Dallas/Maxim device is capable of several different resolutions)
       // actually wanted less, but it did not seem to retain after power down?? TODO
       sensors.setResolution(Thermometer, 12);
-      Console.print("Changed Device 0 Resolution to: ");
+      ConsPrint("Changed Device 0 Resolution to: ");
       uint8_t res=sensors.getResolution(Thermometer);
-      Console.print(res, DEC); 
-      Console.println();
+      ConsPrint(res, DEC); 
+      ConsPrint("\n");
    }
 
    // init temp
@@ -221,11 +260,12 @@ void loop()
          n_heat_on++;
       }
       n_total++;
-      Console.print(n_cool_on);
-      Console.print(" ");
-      Console.print(n_heat_on);
-      Console.print(" ");
-      Console.println(n_total);
+      ConsPrint(n_cool_on);
+      ConsPrint(" ");
+      ConsPrint(n_heat_on);
+      ConsPrint(" ");
+      ConsPrint(n_total);
+      ConsPrint("\n");
    }
    if(cool_on)
    {
@@ -234,58 +274,69 @@ void loop()
 
    if(CO2.is_falling())
    {
-      Console.println("Fall");
+      ConsPrint("Fall\n");
    }
    if(CO2.is_rising())
    {
-      Console.print("Rise: total cnts between checks=");
+      ConsPrint("Rise: total cnts between checks=");
       pulses_between_checks++;
-      Console.println(pulses_between_checks);
+      ConsPrint(pulses_between_checks);
+      ConsPrint("\n");
    }
 
    if(myBridgeComm.check_for_command())
    {
-      Console.println(myBridgeComm.rx_command_buff);
-      Console.println(myBridgeComm.rx_value_buff);
+      ConsPrint(myBridgeComm.rx_command_buff);
+      ConsPrint("\n");
+      ConsPrint(myBridgeComm.rx_value_buff);
+      ConsPrint("\n");
       if(strcmp(myBridgeComm.rx_command_buff,"Temp?")==0)
       {
          get_temp();
-         Console.println("Temp request");
+         ConsPrint("Temp request\n");
          strncpy(myBridgeComm.tx_command_buff,"Temp=",myBridgeComm.COMMAND_LEN);
          myBridgeComm.set_tx_value(temp_measured,2);
          myBridgeComm.send();
       }
-      if(strcmp(myBridgeComm.rx_command_buff,"CO2?")==0)
+      else if(strcmp(myBridgeComm.rx_command_buff,"CO2?")==0)
       {
-         Console.println("CO2 request");
+         ConsPrint("CO2 request\n");
          strncpy(myBridgeComm.tx_command_buff,"CO2=",myBridgeComm.COMMAND_LEN);
          myBridgeComm.set_tx_value(pulses_between_checks);
          pulses_between_checks=0;
          myBridgeComm.send();
       }
-      if(strcmp(myBridgeComm.rx_command_buff,"setTemp=")==0)
+      else if(strcmp(myBridgeComm.rx_command_buff,"setTemp=")==0)
       {
-         Console.print("must set temp to ");
+         ConsPrint("must set temp to ");
          mySettings.desiredTemp=myBridgeComm.get_rx_value_as_float();
-         Console.println(mySettings.desiredTemp);
+         ConsPrint(mySettings.desiredTemp);
+         ConsPrint("\n");
          // acknowledge with the parsed temp (approx requested one)
          strncpy(myBridgeComm.tx_command_buff,"setTemp2",myBridgeComm.COMMAND_LEN);
          myBridgeComm.set_tx_value(mySettings.desiredTemp);
+         myBridgeComm.send();
+         ConsPrint("ack was sent");
       }
-      if(strcmp(myBridgeComm.rx_command_buff,"Act?")==0)
+      else if(strcmp(myBridgeComm.rx_command_buff,"Act?")==0)
       {
-         Console.println("actuators request");
+         ConsPrint("actuators request\n");
          strncpy(myBridgeComm.tx_command_buff,"ActCool=",myBridgeComm.COMMAND_LEN);
          // TODO: better concat of the 3 values - for now assume never above 1024
          // and hence 3 values fitting in 32bit
          uint32_t myVal=n_cool_on+1024lu*n_heat_on+1024lu*1024lu*n_total;
-         Console.print("myVal=");
-         Console.println(myVal);
+         ConsPrint("myVal=");
+         ConsPrint(myVal);
+         ConsPrint("\n");
          myBridgeComm.set_tx_value_long(myVal);
          n_cool_on=0;
          n_heat_on=0;
          n_total=0;
          myBridgeComm.send();
+      }
+      else
+      {
+        // TODO: handle it
       }
 
    }
@@ -300,8 +351,8 @@ void printAddress(DeviceAddress deviceAddress)
 {
    for (uint8_t i = 0; i < 8; i++)
    {
-      if (deviceAddress[i] < 16) Console.print("0");
-      Console.print(deviceAddress[i], HEX);
+      if (deviceAddress[i] < 16) ConsPrint("0");
+      ConsPrint(deviceAddress[i], HEX);
    }
 }
 
