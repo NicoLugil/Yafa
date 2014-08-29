@@ -96,9 +96,9 @@ void BridgeComm::set_tx_value(unsigned int v)
 void BridgeComm::set_tx_value_long(uint32_t v)
 {
    // TODO: check if fits in string
-   Console.println(v);
+   //Console.println(v);
    ultoa(v,tx_value_buff,10);
-   Console.println(tx_value_buff);
+   //Console.println(tx_value_buff);
 }
 
 float BridgeComm::get_rx_value_as_float()
