@@ -1,3 +1,6 @@
 *.pyc
 .idea/
 /web/Yafa/nbproject/private/
+/mcu/sketch/trials/
+/doc/
+/python/logs/
