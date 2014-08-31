@@ -7,7 +7,10 @@ class settings
 
    public:
       float desiredTemp;
-      float HystOneSide;   // e.g. cooling on when temp > desiredTemp+HystOneSide
+      float HystOneSide_ON;   // cooling ON when temp > desiredTemp+HystOneSide_ON
+                              // heating ON when temp < desiredTemp-HystOneSide_ON
+      float HystOneSide_OFF;  // cooling OFF when temp < desiredTemp-HystOneSide_OFF
+                              // heating OFF when temp > desiredTemp+HystOneSide_OFF
       uint8_t FridgeTimeOff;    // Fridge can not be turned on shorter than this time after turning it off (minutes)
 
       settings()
@@ -18,7 +21,8 @@ class settings
       void ToDefault()
       {
          desiredTemp=19.5;
-         HystOneSide=0.25;
+         HystOneSide_ON=0.13;
+         HystOneSide_OFF=0.13;
          FridgeTimeOff=10;
       }
 

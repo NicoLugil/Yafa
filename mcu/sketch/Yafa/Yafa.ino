@@ -106,17 +106,29 @@ float get_temp()
    unsigned long s1;
    s1=millis();
    sensors.requestTemperatures();
-   temp_measured = sensors.getTempCByIndex(0);
-   last_tmp_meas_time=millis();
-   ConsPrint("temp measured=");
-   ConsPrint(temp_measured);
-   ConsPrint(" took ");
-   ConsPrint(last_tmp_meas_time-s1);
-   ConsPrint(" millis\n");
+   float tmp = sensors.getTempCByIndex(0);
+   if(tmp>-5 && tmp<40)
+   {
+      temp_measured = tmp;
+      last_tmp_meas_time=millis();
+      ConsPrint("temp measured=");
+      ConsPrint(temp_measured);
+      ConsPrint(" took ");
+      ConsPrint(last_tmp_meas_time-s1);
+      ConsPrint(" millis\n");
+   }
+   else
+   {
+      // TODO something here
+      ConsPrint("Sensor returned weird temp, ignoring\n");
+   }
    return temp_measured;
 }
 
 void setup() {
+
+   delay(4000+2000); // pass uboot
+
    pinMode(PIN_TEMP, INPUT);
    pinMode(PIN_COOL, OUTPUT);
    pinMode(PIN_HEAT, OUTPUT);
@@ -219,7 +231,7 @@ void loop()
 
       if(!cool_on && !heat_on)
       {
-         if(temp_measured>(mySettings.desiredTemp+mySettings.HystOneSide))
+         if(temp_measured>(mySettings.desiredTemp+mySettings.HystOneSide_ON))
          {
             if( (now-last_time_cool_on) > 60*1000*mySettings.FridgeTimeOff)
             {
@@ -227,7 +239,7 @@ void loop()
             }
             set_heat(false); // remove ??
          }
-         else if(temp_measured<(mySettings.desiredTemp-mySettings.HystOneSide)) 
+         else if(temp_measured<(mySettings.desiredTemp-mySettings.HystOneSide_ON)) 
          {
             set_cool(false); // remove ??
             set_heat(true);
@@ -235,7 +247,7 @@ void loop()
       }
       else if(cool_on)
       {
-         if(temp_measured<=mySettings.desiredTemp) 
+         if(temp_measured<=mySettings.desiredTemp-mySettings.HystOneSide_OFF) 
          {
             set_cool(false);
          }
@@ -244,7 +256,7 @@ void loop()
       else
       {
          // heat && !cool
-         if(temp_measured>=mySettings.desiredTemp) 
+         if(temp_measured>=mySettings.desiredTemp+mySettings.HystOneSide_OFF) 
          {
             set_heat(false); 
          }
@@ -336,7 +348,7 @@ void loop()
       }
       else
       {
-        // TODO: handle it
+         // TODO: handle it
       }
 
    }

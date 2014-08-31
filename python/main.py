@@ -89,7 +89,7 @@ def main():
     # reset mcu and establish connection
     my_logger.debug("resetting mcu now")
     call(["reset-mcu"])
-    time.sleep(5)
+    time.sleep(5+6)
     myComm = BridgeComm()
     myComm.send("Init?","-")
     if myComm.wait_for_new_msg(10,my_logger):
@@ -123,11 +123,15 @@ def main():
         try:
             time.sleep(10)
             if timer_checkwifi.enough_time_passed():
-                ping_delay = lib.pythonping.do_one("192.168.1.1",5)
-                if ping_delay is None:
-                    SendMail("nico@lugil.be","Wifi lost","Wifi lost")
-                    call(["wifi"])
-                    time.sleep(20)
+                try:
+                    ping_delay = lib.pythonping.do_one("192.168.1.1",5)
+                    if ping_delay is None:
+                        SendMail("nico@lugil.be","Wifi lost","Wifi lost")
+                        call(["wifi"])
+                        time.sleep(20)
+                except Exception as e:
+                    e.args += ('happened while trying to checkwifi',)
+                    raise
             if timer_mail.enough_time_passed():
                 try:
                     new_mail, msg = GetMail(my_logger)
@@ -175,6 +179,8 @@ def main():
                     raise
                 now_str=now.strftime("%Y-%m-%d %H:%M")
                 myFileIO.write(now_str)
+                myFileIO.write(",")
+                myFileIO.write(mySettings.temp)
                 myFileIO.write(",")
                 myFileIO.write(temp)
                 myFileIO.write(",")

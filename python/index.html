@@ -34,11 +34,11 @@ style="width:640px; height:500px;"></div>
     g2 = new Dygraph(
             document.getElementById("graphdiv2"),
             "dat.csv", // path to CSV file
-            {labels: ["Date", "Temperature","pulses","Heat/Cool"],
+            {labels: ["Date", "T desired", "T","pulses","Heat/Cool"],
                 rollPeriod: 3,
                 showRoller: true,
                 title: "Temperature",
-                visibility: [true, false, false]
+                visibility: [true, true, false, false]
             }
     );
 </script>
@@ -46,11 +46,11 @@ style="width:640px; height:500px;"></div>
     g3 = new Dygraph(
             document.getElementById("graphdiv3"),
             "dat.csv", // path to CSV file
-            {labels: ["Date", "Temperature","pulses","Heat/Cool"],
+            {labels: ["Date", "T desired", "T","pulses","Heat/Cool"],
                 rollPeriod: 3,
                 showRoller: true,
                 title: "CO2 pulses",
-                visibility: [false, true, false]
+                visibility: [false, false, true, false]
             }
     );
 </script>
@@ -58,11 +58,11 @@ style="width:640px; height:500px;"></div>
     g4 = new Dygraph(
             document.getElementById("graphdiv4"),
             "dat.csv", // path to CSV file
-            {labels: ["Date", "Temperature","pulses","Heat/Cool"],
+            {labels: ["Date", "T desired", "T","pulses","Heat/Cool"],
                 rollPeriod: 1,
                 showRoller: true,
                 title: "Heating (1), Cooling (-1)",
-                visibility: [false, false, true]
+                visibility: [false, false, false, true]
             }
     );
 </script>
