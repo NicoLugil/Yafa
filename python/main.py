@@ -143,8 +143,10 @@ def main():
                     sys.stdout.flush()
                     mySettings.parse_string(msg,my_logger)
                     setTemp(mySettings.temp,my_logger,myComm)   # TODO: do better - just trial now
-                    # todo: write xml file if can be parsed succesfully
+                    my_SendMail.SendNewMail("nico@lugil.be","Yafa: temperature set to "+str(mySettings.temp),"All other settings were ignored! Also settings were not saved",my_logger)
+                    # TODO: write xml file if can be parsed succesfully
             if timer_log.enough_time_passed():
+                #TODO: raise if no response
                 myFileIO = StringIO.StringIO()
                 myComm.send("Temp?","-")
                 #if myComm.check_new_msg():
@@ -152,6 +154,16 @@ def main():
                     my_logger.debug("New Temp received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))
                     # TODO: check response comand!!!
                     temp=myComm.read_value
+                myComm.send("Tmax?","-")
+                if myComm.wait_for_new_msg(10,my_logger):
+                    my_logger.debug("New Tmax received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))
+                    # TODO: check response comand!!!
+                    tmax=myComm.read_value
+                myComm.send("Tmin?","-")
+                if myComm.wait_for_new_msg(10,my_logger):
+                    my_logger.debug("New Tmin received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))
+                    # TODO: check response comand!!!
+                    tmin=myComm.read_value
                 myComm.send("CO2?","-")
                 if myComm.wait_for_new_msg(10,my_logger):
                     my_logger.debug("New CO2 pulses received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))
@@ -183,6 +195,10 @@ def main():
                 myFileIO.write(mySettings.temp)
                 myFileIO.write(",")
                 myFileIO.write(temp)
+                myFileIO.write(",")
+                myFileIO.write(tmax)
+                myFileIO.write(",")
+                myFileIO.write(tmin)
                 myFileIO.write(",")
                 myFileIO.write(pulses)
                 myFileIO.write(",")

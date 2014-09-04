@@ -38,7 +38,7 @@ class SendMail:
         try:
             my_logger.debug("SendPendingMail:")
             if self.timer.enough_time_passed():
-                print "   timer OK"
+                #print "   timer OK"
                 my_logger.debug("   timer OK!")
                 self.timer.set_interval(0)
                 USERNAME = private.pw.myMailUser
@@ -48,7 +48,7 @@ class SendMail:
                 server.starttls()
                 server.ehlo_or_helo_if_needed()
                 server.login(USERNAME,PASSWORD)
-                print "before loop: len = "+str(len(self.toSend))
+                #print "before loop: len = "+str(len(self.toSend))
                 while self.toSend:
                     item = self.toSend[0]
                     msg = MIMEText(item[2])
@@ -63,7 +63,7 @@ class SendMail:
                     raise Exception("Unexpected len(self.toSend) != 0 in SendMail (len="+str(len(self.toSend))+")")
             else: 
                 my_logger.debug("   waiting for timer to end, time remaining={0}s".format(self.timer.get_remaining_time()))
-                print "   waiting for timer to end, time remaining={0}s".format(self.timer.get_remaining_time())
+                #print "   waiting for timer to end, time remaining={0}s".format(self.timer.get_remaining_time())
         except Exception as e:
             # didnt manage to send all mails - put timer and hope when timer end all works
             self.timer.set_interval(120)
@@ -73,7 +73,7 @@ class SendMail:
         # TODO: max size
         tup = (tto, subject, body)
         self.toSend.append(tup)
-        print "SendNewMail added to toSend: "+str(tup)+". Total mails to send: "+str(len(self.toSend))+"."
+        #print "SendNewMail added to toSend: "+str(tup)+". Total mails to send: "+str(len(self.toSend))+"."
         self.SendPendingMail(my_logger)
 
 

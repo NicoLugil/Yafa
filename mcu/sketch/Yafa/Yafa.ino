@@ -64,6 +64,7 @@ void set_cool(bool v)
 uint32_t n_cool_on;
 uint32_t n_heat_on;
 uint32_t n_total;
+float t_max, t_min;
 
 // Console extension
 // TODO: make class
@@ -209,6 +210,8 @@ void setup() {
    n_cool_on=0;
    n_heat_on=0;
    n_total=0;
+   t_max=temp_measured;
+   t_min=temp_measured;
 }
 
 void loop() 
@@ -225,13 +228,22 @@ void loop()
    {
       digitalWrite(13,HIGH);
       get_temp();
+      if(temp_measured>t_max)
+      {
+         t_max=temp_measured;
+      }
+      if(temp_measured<t_min)
+      {
+         t_min=temp_measured;
+      }
       digitalWrite(13,LOW);
 
       // TODO: avoid switch to same situation
+      // TODO: code below wont work for all settings (!cool && !heat)
 
       if(!cool_on && !heat_on)
       {
-         if(temp_measured>(mySettings.desiredTemp+mySettings.HystOneSide_ON))
+         if(temp_measured>(mySettings.desiredTemp+mySettings.HystOneSide_cool_ON))
          {
             if( (now-last_time_cool_on) > 60*1000*mySettings.FridgeTimeOff)
             {
@@ -239,7 +251,7 @@ void loop()
             }
             set_heat(false); // remove ??
          }
-         else if(temp_measured<(mySettings.desiredTemp-mySettings.HystOneSide_ON)) 
+         else if(temp_measured<(mySettings.desiredTemp+mySettings.HystOneSide_heat_ON)) 
          {
             set_cool(false); // remove ??
             set_heat(true);
@@ -247,7 +259,7 @@ void loop()
       }
       else if(cool_on)
       {
-         if(temp_measured<=mySettings.desiredTemp-mySettings.HystOneSide_OFF) 
+         if(temp_measured<=mySettings.desiredTemp+mySettings.HystOneSide_cool_OFF) 
          {
             set_cool(false);
          }
@@ -256,7 +268,7 @@ void loop()
       else
       {
          // heat && !cool
-         if(temp_measured>=mySettings.desiredTemp+mySettings.HystOneSide_OFF) 
+         if(temp_measured>=mySettings.desiredTemp+mySettings.HystOneSide_heat_OFF) 
          {
             set_heat(false); 
          }
@@ -309,6 +321,24 @@ void loop()
          strncpy(myBridgeComm.tx_command_buff,"Temp=",myBridgeComm.COMMAND_LEN);
          myBridgeComm.set_tx_value(temp_measured,2);
          myBridgeComm.send();
+      }
+      if(strcmp(myBridgeComm.rx_command_buff,"Tmax?")==0)
+      {
+         get_temp();
+         ConsPrint("Temp max request\n");
+         strncpy(myBridgeComm.tx_command_buff,"Tmax=",myBridgeComm.COMMAND_LEN);
+         myBridgeComm.set_tx_value(t_max,2);
+         myBridgeComm.send();
+         t_max=temp_measured;
+      }
+      if(strcmp(myBridgeComm.rx_command_buff,"Tmin?")==0)
+      {
+         get_temp();
+         ConsPrint("Temp min request\n");
+         strncpy(myBridgeComm.tx_command_buff,"Tmin=",myBridgeComm.COMMAND_LEN);
+         myBridgeComm.set_tx_value(t_min,2);
+         myBridgeComm.send();
+         t_min=temp_measured;
       }
       else if(strcmp(myBridgeComm.rx_command_buff,"CO2?")==0)
       {
