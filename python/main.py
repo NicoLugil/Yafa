@@ -59,6 +59,24 @@ def setTemp(temp,my_logger,myComm):
         my_logger.error("MCU error no response-setTemp")
         exit(1)
 
+def sendToSketch(command,value,my_logger,myComm):
+    print "Sending " + command + " command"
+    myComm.send(command,str(value))
+    if myComm.wait_for_new_msg(10,my_logger):
+        if myComm.read_command==(command):
+            my_logger.debug(command+"OK!")
+            # TODO: check value within apprximation
+        else:
+            print "got wrong " + command + " ack:"+myComm.read_command
+            my_logger.error("MCU error: unexpexted response-"+command)
+            # TODO: error 
+            exit(1)
+    else:
+        # TODO error
+        print "got no " + command + " ack"
+        my_logger.error("MCU error no response-"+command)
+        exit(1)
+
 def main():
 
     try:
@@ -110,7 +128,7 @@ def main():
     time.sleep(5)  # because I am slow in opening console :)
 
     #initial config - for now just temp
-    setTemp(mySettings.temp,my_logger,myComm)
+    sendToSketch("setTemp=",mySettings.temp,my_logger,myComm)
 
     timer_log = TimedActions(301)
     timer_mail = TimedActions(61)
@@ -139,11 +157,21 @@ def main():
                     e.args += ('happened while trying to GetMail',)
                     raise
                 if new_mail:
+                    # TODO: work out - for now very "dedicated"
                     my_logger.debug(msg)
                     sys.stdout.flush()
                     mySettings.parse_string(msg,my_logger)
-                    setTemp(mySettings.temp,my_logger,myComm)   # TODO: do better - just trial now
-                    my_SendMail.SendNewMail("nico@lugil.be","Yafa: temperature set to "+str(mySettings.temp),"All other settings were ignored! Also settings were not saved",my_logger)
+                    sendToSketch("setTemp=",mySettings.temp,my_logger,myComm)
+                    sendToSketch("setdHeatOn=",mySettings.dHeat_on,my_logger,myComm)
+                    sendToSketch("setdHeatOff=",mySettings.dHeat_off,my_logger,myComm)
+                    sendToSketch("setdCoolOn=",mySettings.dCool_on,my_logger,myComm)
+                    sendToSketch("setdCoolOff=",mySettings.dCool_off,my_logger,myComm)
+                    my_SendMail.SendNewMail("nico@lugil.be","Yafa: temperature set to "+str(mySettings.temp),
+                                            "delta Heat ON  = " + str(mySettings.dHeat_on) + "\n" + 
+                                            "delta Heat OFF = " + str(mySettings.dHeat_off) + "\n" + 
+                                            "delta Cool ON  = " + str(mySettings.dCool_on) + "\n" + 
+                                            "delta Cool OFF = " + str(mySettings.dCool_off) + "\n" + 
+                                            "All other settings were ignored! Also settings were not saved",my_logger)
                     # TODO: write xml file if can be parsed succesfully
             if timer_log.enough_time_passed():
                 #TODO: raise if no response

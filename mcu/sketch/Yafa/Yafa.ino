@@ -243,7 +243,7 @@ void loop()
 
       if(!cool_on && !heat_on)
       {
-         if(temp_measured>(mySettings.desiredTemp+mySettings.HystOneSide_cool_ON))
+         if(temp_measured>(mySettings.desiredTemp+mySettings.delta_cool_ON))
          {
             if( (now-last_time_cool_on) > 60*1000*mySettings.FridgeTimeOff)
             {
@@ -251,7 +251,7 @@ void loop()
             }
             set_heat(false); // remove ??
          }
-         else if(temp_measured<(mySettings.desiredTemp+mySettings.HystOneSide_heat_ON)) 
+         else if(temp_measured<(mySettings.desiredTemp+mySettings.delta_heat_ON)) 
          {
             set_cool(false); // remove ??
             set_heat(true);
@@ -259,7 +259,7 @@ void loop()
       }
       else if(cool_on)
       {
-         if(temp_measured<=mySettings.desiredTemp+mySettings.HystOneSide_cool_OFF) 
+         if(temp_measured<=mySettings.desiredTemp+mySettings.delta_cool_OFF) 
          {
             set_cool(false);
          }
@@ -268,7 +268,7 @@ void loop()
       else
       {
          // heat && !cool
-         if(temp_measured>=mySettings.desiredTemp+mySettings.HystOneSide_heat_OFF) 
+         if(temp_measured>=mySettings.desiredTemp+mySettings.delta_heat_OFF) 
          {
             set_heat(false); 
          }
@@ -350,15 +350,41 @@ void loop()
       }
       else if(strcmp(myBridgeComm.rx_command_buff,"setTemp=")==0)
       {
-         ConsPrint("must set temp to ");
          mySettings.desiredTemp=myBridgeComm.get_rx_value_as_float();
          ConsPrint(mySettings.desiredTemp);
          ConsPrint("\n");
          // acknowledge with the parsed temp (approx requested one)
-         strncpy(myBridgeComm.tx_command_buff,"setTemp2",myBridgeComm.COMMAND_LEN);
+         strncpy(myBridgeComm.tx_command_buff,"setTemp",myBridgeComm.COMMAND_LEN);
          myBridgeComm.set_tx_value(mySettings.desiredTemp);
          myBridgeComm.send();
-         ConsPrint("ack was sent");
+      }
+      else if(strcmp(myBridgeComm.rx_command_buff,"setdHeatOn=")==0)
+      {
+         mySettings.delta_heat_ON=myBridgeComm.get_rx_value_as_float();
+         strncpy(myBridgeComm.tx_command_buff,"setdHeatOn",myBridgeComm.COMMAND_LEN);
+         myBridgeComm.set_tx_value(mySettings.delta_heat_ON);
+         myBridgeComm.send();
+      }
+      else if(strcmp(myBridgeComm.rx_command_buff,"setdHeatOff=")==0)
+      {
+         mySettings.delta_heat_OFF=myBridgeComm.get_rx_value_as_float();
+         strncpy(myBridgeComm.tx_command_buff,"setdHeatOff",myBridgeComm.COMMAND_LEN);
+         myBridgeComm.set_tx_value(mySettings.delta_heat_OFF);
+         myBridgeComm.send();
+      }
+      else if(strcmp(myBridgeComm.rx_command_buff,"setdCoolOn=")==0)
+      {
+         mySettings.delta_cool_ON=myBridgeComm.get_rx_value_as_float();
+         strncpy(myBridgeComm.tx_command_buff,"setdCoolOn",myBridgeComm.COMMAND_LEN);
+         myBridgeComm.set_tx_value(mySettings.delta_cool_ON);
+         myBridgeComm.send();
+      }
+      else if(strcmp(myBridgeComm.rx_command_buff,"setdCoolOff=")==0)
+      {
+         mySettings.delta_cool_OFF=myBridgeComm.get_rx_value_as_float();
+         strncpy(myBridgeComm.tx_command_buff,"setdCoolOff",myBridgeComm.COMMAND_LEN);
+         myBridgeComm.set_tx_value(mySettings.delta_cool_OFF);
+         myBridgeComm.send();
       }
       else if(strcmp(myBridgeComm.rx_command_buff,"Act?")==0)
       {

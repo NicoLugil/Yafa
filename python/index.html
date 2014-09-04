@@ -6,8 +6,20 @@
             src="../raphael-min.js"></script>
 </head>
 <body>
+
 <div id="Logo"
      style="width:640px; height:160px;"></div>
+
+    <div id="blah"></div>
+    <p><b>Display: </b> 
+    <input type=checkbox id=1 onClick="change(this)" checked>
+    <label for="0"> Tsampled</label> 
+    <input type=checkbox id=2 onClick="change(this)" checked>
+    <label for="1"> Tmax</label> 
+    <input type=checkbox id=3 onClick="change(this)" checked>
+    <label for="2"> Tmin</label> 
+    </p>
+
 <div id="graphdiv2"
      style="width:640px; height:300px;"></div>
 <div id="white"
@@ -23,7 +35,7 @@ style="width:640px; height:500px;"></div>
 <script type="text/javascript">
     var paper=new Raphael(document.getElementById("Logo"), 640, 160);
     var rect = paper.rect(0,0,640,140,6);
-    rect.attr("fill","snow");
+    rect.attr("fill","rgb(255,255,255)");
     rect.attr("stroke","black");
     var mytxt = paper.text(320,45,"Yafa!");
     mytxt.attr({'font-size': 80, 'fill': "Black"});
@@ -38,9 +50,13 @@ style="width:640px; height:500px;"></div>
                 rollPeriod: 3,
                 showRoller: true,
                 title: "Temperature",
+		colors: ['rgb(242,159,5)','rgb(136,166,27)','rgb(217,37,37)','rgb(14,61,89)','red','red'],
                 visibility: [true, true, true, true, false, false]
             }
     );
+    function change(el) {
+        g2.setVisibility(el.id, el.checked);
+    }
 </script>
 <script type="text/javascript">
     g3 = new Dygraph(
@@ -50,6 +66,7 @@ style="width:640px; height:500px;"></div>
                 rollPeriod: 3,
                 showRoller: true,
                 title: "CO2 pulses",
+		colors: ['rgb(242,159,5)','rgb(136,166,27)','rgb(217,37,37)','rgb(14,61,89)','red','red'],
                 visibility: [false, false, false, false, true, false]
             }
     );
@@ -62,6 +79,7 @@ style="width:640px; height:500px;"></div>
                 rollPeriod: 1,
                 showRoller: true,
                 title: "Heating (1), Cooling (-1)",
+		colors: ['rgb(242,159,5)','rgb(136,166,27)','rgb(217,37,37)','rgb(14,61,89)','red','red'],
                 visibility: [false, false, false, false, false, true]
             }
     );
