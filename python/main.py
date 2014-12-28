@@ -152,16 +152,18 @@ def main():
                     sendToSketch("setdHeatOff=",mySettings.dHeat_off,my_logger,myComm)
                     sendToSketch("setdCoolOn=",mySettings.dCool_on,my_logger,myComm)
                     sendToSketch("setdCoolOff=",mySettings.dCool_off,my_logger,myComm)
+                    # write xml file 
+                    # TODO: chekc if was parsed succesfully
+                    mySettings.write_file(SETTINGS_FILE,my_logger)
                     my_SendMail.SendNewMail("nico@lugil.be","Yafa: temperature set to "+str(mySettings.temp),
                                             "delta Heat ON  = " + str(mySettings.dHeat_on) + "\n" + 
                                             "delta Heat OFF = " + str(mySettings.dHeat_off) + "\n" + 
                                             "delta Cool ON  = " + str(mySettings.dCool_on) + "\n" + 
                                             "delta Cool OFF = " + str(mySettings.dCool_off) + "\n" + 
-                                            "All other settings were ignored! Also settings were not saved",my_logger)
-                    # TODO: write xml file if can be parsed succesfully
+                                            "settings should be saved",my_logger)
             if timer_log.enough_time_passed():
                 #TODO: raise if no response
-                myFileIO = StringIO.StringIO()
+                myStringIO = StringIO.StringIO()
                 myComm.send("Temp?","-")
                 #if myComm.check_new_msg():
                 if myComm.wait_for_new_msg(10,my_logger):
@@ -204,24 +206,24 @@ def main():
                     e.args += ('happened while trying to get time now',)
                     raise
                 now_str=now.strftime("%Y-%m-%d %H:%M")
-                myFileIO.write(now_str)
-                myFileIO.write(",")
-                myFileIO.write(mySettings.temp)
-                myFileIO.write(",")
-                myFileIO.write(temp)
-                myFileIO.write(",")
-                myFileIO.write(tmax)
-                myFileIO.write(",")
-                myFileIO.write(tmin)
-                myFileIO.write(",")
-                myFileIO.write(pulses)
-                myFileIO.write(",")
-                myFileIO.write(str(avg_act))
-                myFileIO.write(",")
-                myFileIO.write(str(perc_heat))
-                myFileIO.write(",")
-                myFileIO.write(str(perc_cool))
-                myFileIO.seek(0)
+                myStringIO.write(now_str)
+                myStringIO.write(",")
+                myStringIO.write(mySettings.temp)
+                myStringIO.write(",")
+                myStringIO.write(temp)
+                myStringIO.write(",")
+                myStringIO.write(tmax)
+                myStringIO.write(",")
+                myStringIO.write(tmin)
+                myStringIO.write(",")
+                myStringIO.write(pulses)
+                myStringIO.write(",")
+                myStringIO.write(str(avg_act))
+                myStringIO.write(",")
+                myStringIO.write(str(perc_heat))
+                myStringIO.write(",")
+                myStringIO.write(str(perc_cool))
+                myStringIO.seek(0)
                 try:
                     ftp=FTP("ftp.homebrew.be")
                     ftp.login(private.pw.myFtpUser,private.pw.myFtpPass)
@@ -235,18 +237,18 @@ def main():
                         ftp.cwd(mySettings.name)
                         ftp.storbinary("STOR index.html",open("/mnt/sda1/arduino/Yafa/index.html","r"))
                         if mySettings.clear:
-                            ftp.storlines("STOR dat.csv",myFileIO)
+                            ftp.storlines("STOR dat.csv",myStringIO)
                         else:
-                            ftp.storlines("APPE dat.csv",myFileIO)
+                            ftp.storlines("APPE dat.csv",myStringIO)
                         my_cnt=1
                     else:
                         ftp.cwd(mySettings.name)
-                        ftp.storlines("APPE dat.csv",myFileIO)
+                        ftp.storlines("APPE dat.csv",myStringIO)
                     ftp.close()
                 except Exception as e:
                     e.args += ('happened while trying to ftp',)
                     raise
-                myFileIO.close()
+                myStringIO.close()
                 sys.stdout.flush()
                 my_SendMail.SendPendingMail(my_logger) # TODO: do less often
         except Exception as e:

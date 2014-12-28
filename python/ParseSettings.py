@@ -65,3 +65,23 @@ class ParseSettings:
         with open (filename, "r") as myfile:
             text=myfile.read()
             self.parse_string(text,my_logger)
+    def write_file(self,filename,my_logger):
+        yafadoc = ET.Element('yafadoc')
+        name = ET.SubElement(yafadoc,'name')
+        name.text = self.name
+        temp = ET.SubElement(yafadoc,'temp')
+        temp.text = str(self.temp)
+        clear = ET.SubElement(yafadoc,'clear')
+        clear.text = 'False'
+        dHeat_on = ET.SubElement(yafadoc,'dHeat_on')
+        dHeat_on.text = str(self.dHeat_on)
+        dHeat_off = ET.SubElement(yafadoc,'dHeat_off')
+        dHeat_off.text = str(self.dHeat_off)
+        dCool_on = ET.SubElement(yafadoc,'dCool_on')
+        dCool_on.text = str(self.dCool_on)
+        dCool_off = ET.SubElement(yafadoc,'dCool_off')
+        dCool_off.text = str(self.dCool_off)
+        with open (filename, "w") as myfile:
+            myfile.write(ET.tostring(yafadoc))
+
+
