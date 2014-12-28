@@ -41,24 +41,6 @@ import lib.pythonping
 # some defines
 SETTINGS_FILE = "/mnt/sda1/arduino/Yafa/settings.xml"
 
-def setTemp(temp,my_logger,myComm):
-    print "Sending setTemp command"
-    myComm.send("setTemp=",str(temp))
-    if myComm.wait_for_new_msg(10,my_logger):
-        if myComm.read_command=="setTemp2":
-            my_logger.debug("temp set OK!")
-            # TODO: check temp value within apprximation
-        else:
-            print "got wrong setTemp ack:"+myComm.read_command
-            my_logger.error("MCU error: unexpexted response-setTemp")
-            # TODO: error 
-            exit(1)
-    else:
-        # TODO error
-        print "got no setTemp ack"
-        my_logger.error("MCU error no response-setTemp")
-        exit(1)
-
 def sendToSketch(command,value,my_logger,myComm):
     print "Sending " + command + " command"
     myComm.send(command,str(value))
@@ -127,8 +109,12 @@ def main():
     print "waiting for 5sec now"
     time.sleep(5)  # because I am slow in opening console :)
 
-    #initial config - for now just temp
+    #initial config - for now just temp stuff
     sendToSketch("setTemp=",mySettings.temp,my_logger,myComm)
+    sendToSketch("setdHeatOn=",mySettings.dHeat_on,my_logger,myComm)
+    sendToSketch("setdHeatOff=",mySettings.dHeat_off,my_logger,myComm)
+    sendToSketch("setdCoolOn=",mySettings.dCool_on,my_logger,myComm)
+    sendToSketch("setdCoolOff=",mySettings.dCool_off,my_logger,myComm)
 
     timer_log = TimedActions(301)
     timer_mail = TimedActions(61)
@@ -231,6 +217,10 @@ def main():
                 myFileIO.write(pulses)
                 myFileIO.write(",")
                 myFileIO.write(str(avg_act))
+                myFileIO.write(",")
+                myFileIO.write(str(perc_heat))
+                myFileIO.write(",")
+                myFileIO.write(str(perc_cool))
                 myFileIO.seek(0)
                 try:
                     ftp=FTP("ftp.homebrew.be")

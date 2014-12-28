@@ -10,15 +10,15 @@
 <div id="Logo"
      style="width:640px; height:160px;"></div>
 
-    <div id="blah"></div>
-    <p><b>Display: </b> 
-    <input type=checkbox id=1 onClick="change(this)" checked>
-    <label for="0"> Tsampled</label> 
-    <input type=checkbox id=2 onClick="change(this)" checked>
-    <label for="1"> Tmax</label> 
-    <input type=checkbox id=3 onClick="change(this)" checked>
-    <label for="2"> Tmin</label> 
-    </p>
+<div id="blah"></div>
+<p><b>Display: </b> 
+<input type=checkbox id=1 onClick="change(this)" checked>
+<label for="0"> Tsampled</label> 
+<input type=checkbox id=2 onClick="change(this)" checked>
+<label for="1"> Tmax</label> 
+<input type=checkbox id=3 onClick="change(this)" checked>
+<label for="2"> Tmin</label> 
+</p>
 
 <div id="graphdiv2"
      style="width:640px; height:300px;"></div>
@@ -46,12 +46,12 @@ style="width:640px; height:500px;"></div>
     g2 = new Dygraph(
             document.getElementById("graphdiv2"),
             "dat.csv", // path to CSV file
-            {labels: ["Date", "T desired", "T","Tmax","Tmin","pulses","Heat/Cool"],
+            {labels: ["Date", "T desired", "T","Tmax","Tmin","pulses","Heat-Cool","%Heat On","%Cool On"],
                 rollPeriod: 3,
                 showRoller: true,
                 title: "Temperature",
-		colors: ['rgb(242,159,5)','rgb(136,166,27)','rgb(217,37,37)','rgb(14,61,89)','red','red'],
-                visibility: [true, true, true, true, false, false]
+		colors: ['rgb(242,159,5)','rgb(136,166,27)','rgb(217,37,37)','rgb(14,61,89)','red','purple','red','blue'],
+                visibility: [true, true, true, true, false, false, false, false]
             }
     );
     function change(el) {
@@ -62,12 +62,12 @@ style="width:640px; height:500px;"></div>
     g3 = new Dygraph(
             document.getElementById("graphdiv3"),
             "dat.csv", // path to CSV file
-            {labels: ["Date", "T desired", "T","Tmax","Tmin","pulses","Heat/Cool"],
+            {labels: ["Date", "T desired", "T","Tmax","Tmin","pulses","Heat-Cool","%Heat On","%Cool On"],
                 rollPeriod: 3,
                 showRoller: true,
                 title: "CO2 pulses",
-		colors: ['rgb(242,159,5)','rgb(136,166,27)','rgb(217,37,37)','rgb(14,61,89)','red','red'],
-                visibility: [false, false, false, false, true, false]
+		colors: ['rgb(242,159,5)','rgb(136,166,27)','rgb(217,37,37)','rgb(14,61,89)','red','purple','red','blue'],
+                visibility: [false, false, false, false, true, false, false, false]
             }
     );
 </script>
@@ -75,12 +75,12 @@ style="width:640px; height:500px;"></div>
     g4 = new Dygraph(
             document.getElementById("graphdiv4"),
             "dat.csv", // path to CSV file
-            {labels: ["Date", "T desired", "T","Tmax","Tmin","pulses","Heat/Cool"],
+            {labels: ["Date", "T desired", "T","Tmax","Tmin","pulses","Heat-Cool","%Heat On","%Cool On"],
                 rollPeriod: 1,
                 showRoller: true,
-                title: "Heating (1), Cooling (-1)",
-		colors: ['rgb(242,159,5)','rgb(136,166,27)','rgb(217,37,37)','rgb(14,61,89)','red','red'],
-                visibility: [false, false, false, false, false, true]
+                title: "Heating, Cooling",
+		colors: ['rgb(242,159,5)','rgb(136,166,27)','rgb(217,37,37)','rgb(14,61,89)','red','purple','red','blue'],
+                visibility: [false, false, false, false, false, true, true, true]
             }
     );
 </script>
