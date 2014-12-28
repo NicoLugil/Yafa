@@ -80,6 +80,15 @@ def main():
     try:
         mySettings = ParseSettings()
         mySettings.parse_file(SETTINGS_FILE,my_logger)
+        my_SendMail.SendNewMail("nico@lugil.be","Yafa: settings loaded at start",
+                                "dir name       = " +str(mySettings.name) + "\n" + 
+                                "temperature    = " +str(mySettings.temp) + "\n" +
+                                "clear          = " +str(mySettings.clear) + "\n" +
+                                "delta Heat ON  = " + str(mySettings.dHeat_on) + "\n" + 
+                                "delta Heat OFF = " + str(mySettings.dHeat_off) + "\n" + 
+                                "delta Cool ON  = " + str(mySettings.dCool_on) + "\n" + 
+                                "delta Cool OFF = " + str(mySettings.dCool_off) + "\n" 
+                                ,my_logger)
     except Exception as e:
         # TODO: if this doesnt work: make sure user gets informed
         raise
@@ -155,6 +164,8 @@ def main():
                     # write xml file 
                     # TODO: chekc if was parsed succesfully
                     mySettings.write_file(SETTINGS_FILE,my_logger)
+                    my_cnt=0   # quick hack for logging TODO
+
                     my_SendMail.SendNewMail("nico@lugil.be","Yafa: temperature set to "+str(mySettings.temp),
                                             "delta Heat ON  = " + str(mySettings.dHeat_on) + "\n" + 
                                             "delta Heat OFF = " + str(mySettings.dHeat_off) + "\n" + 
