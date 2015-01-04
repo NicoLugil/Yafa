@@ -74,28 +74,28 @@ void ConsPrint(const char d[])
 {
    if(Console_on)
    {
-      ConsPrint(d);
+      Console.Print(d);
    }
 }
 void ConsPrint(const char d[], int f)
 {
    if(Console_on)
    {
-      ConsPrint(d, f);
+      Console.Print(d, f);
    }
 }
 void ConsPrint(int d)
 {
    if(Console_on)
    {
-      ConsPrint(d);
+      Console.Print(d);
    }
 }
 void ConsPrint(int d, int f)
 {
    if(Console_on)
    {
-      ConsPrint(d, f);
+      Console.Print(d, f);
    }
 }
 
