@@ -15,6 +15,8 @@
 #define PIN_COOL 9
 #define PIN_HEAT 8
 
+#define ENABLE_CONSOLEPRINT
+
 TKRelay Cool(PIN_COOL);
 TKRelay Heat(PIN_HEAT);
 YafaDebounce CO2(PIN_CO2,20); // TODO - tweak MaxCnt
@@ -27,17 +29,20 @@ settings mySettings;
 // arrays to hold device address
 DeviceAddress Thermometer;
 
-
-
 // co2 stuff
 int pulses_between_checks;  // only 16 bit, ok?
+
+// regulate?
+bool regulate=false;
 
 // heat/cool stuff
 bool heat_on;
 bool cool_on;
 unsigned long last_time_cool_on;
+
 void set_heat(bool v)
 {
+   v=v&&regulate;
    heat_on=v;
    if(v)
    {
@@ -51,6 +56,7 @@ void set_heat(bool v)
 
 void set_cool(bool v)
 {
+   v=v&&regulate;
    cool_on=v;
    if(v)
    {
@@ -72,31 +78,30 @@ bool Console_on;
 
 void ConsPrint(const char d[])
 {
+#ifdef ENABLE_CONSOLEPRINT
    if(Console_on)
    {
-      Console.Print(d);
+      Console.print(d);
    }
-}
-void ConsPrint(const char d[], int f)
-{
-   if(Console_on)
-   {
-      Console.Print(d, f);
-   }
+#endif
 }
 void ConsPrint(int d)
 {
+#ifdef ENABLE_CONSOLEPRINT
    if(Console_on)
    {
-      Console.Print(d);
+      Console.print(d);
    }
+#endif
 }
 void ConsPrint(int d, int f)
 {
+#ifdef ENABLE_CONSOLEPRINT
    if(Console_on)
    {
-      Console.Print(d, f);
+      Console.print(d, f);
    }
+#endif
 }
 
 // todo make class or so
@@ -104,11 +109,12 @@ unsigned long last_tmp_meas_time;
 float temp_measured;
 float get_temp()
 {
+   // TODO: if weird, or sensor not found --> regulate=false
    unsigned long s1;
    s1=millis();
    sensors.requestTemperatures();
    float tmp = sensors.getTempCByIndex(0);
-   if(tmp>-5 && tmp<40)
+   if(tmp>-5 && tmp<45)
    {
       temp_measured = tmp;
       last_tmp_meas_time=millis();
@@ -176,26 +182,57 @@ void setup() {
    // you would do this to initially discover addresses on the bus and then 
    // use those addresses and manually assign them (see above) once you know 
    // the devices on your bus (and assuming they don't change).
-   if (!sensors.getAddress(Thermometer, 0)) ConsPrint("Unable to find address for Device 0\n"); 
-   // show the addresses we found on the bus
-   ConsPrint("Device 0 Address: ");
-   printAddress(Thermometer);
-   ConsPrint("\n");
-
-   uint8_t res=sensors.getResolution(Thermometer);
-   ConsPrint("Device 0 Resolution: ");
-   ConsPrint(res, DEC); 
-   ConsPrint("\n");
-   if(res!=12)
+   if (!sensors.getAddress(Thermometer, 0)) 
+   { 
+      ConsPrint("Unable to find address for Device 0\n"); 
+   }
+   else
    {
-      // set the resolution to 12 bit (Each Dallas/Maxim device is capable of several different resolutions)
-      // actually wanted less, but it did not seem to retain after power down?? TODO
-      sensors.setResolution(Thermometer, 12);
-      ConsPrint("Changed Device 0 Resolution to: ");
+      regulate=true;
+      // show the addresses we found on the bus
+      ConsPrint("Device 0 Address: ");
+      printAddress(Thermometer);
+      ConsPrint("\n");
+
       uint8_t res=sensors.getResolution(Thermometer);
+      ConsPrint("Device 0 Resolution: ");
       ConsPrint(res, DEC); 
       ConsPrint("\n");
+      if(res!=12)
+      {
+         // set the resolution to 12 bit (Each Dallas/Maxim device is capable of several different resolutions)
+         // actually wanted less, but it did not seem to retain after power down?? TODO
+         sensors.setResolution(Thermometer, 12);
+         ConsPrint("Changed Device 0 Resolution to: ");
+         uint8_t res=sensors.getResolution(Thermometer);
+         ConsPrint(res, DEC); 
+         ConsPrint("\n");
+      }
    }
+
+   while(!myBridgeComm.check_for_command())
+   {}
+   if(strcmp(myBridgeComm.rx_command_buff,"TSensor?")==0)
+   {
+      strncpy(myBridgeComm.tx_command_buff,"TSensor!",myBridgeComm.COMMAND_LEN);
+      if(regulate)
+      {
+         for(unsigned int i=0;i<8;i++)
+         {
+            snprintf(myBridgeComm.tx_value_buff+2*i,myBridgeComm.VALUE_LEN-2*i,"%.2X",Thermometer[i]);
+         }
+      }
+      else
+      {
+         strncpy(myBridgeComm.tx_value_buff,"ERROR",myBridgeComm.VALUE_LEN);
+      }
+   }
+   else
+   {
+      strncpy(myBridgeComm.tx_command_buff,"UnExp!",myBridgeComm.COMMAND_LEN);
+      strncpy(myBridgeComm.tx_value_buff,myBridgeComm.rx_command_buff,myBridgeComm.VALUE_LEN);
+   }
+   myBridgeComm.send();
 
    // init temp
    get_temp();

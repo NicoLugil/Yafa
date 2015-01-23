@@ -78,25 +78,10 @@ def main():
 
     try:
         my_SendMail = SendMail()
-        my_SendMail.SendNewMail("nico@lugil.be","Yun start","I started",my_logger)
+    #   my_SendMail.SendNewMail("nico@lugil.be","Yun start","I started",my_logger)
     except Exception as e:
         raise
 
-    try:
-        mySettings = ParseSettings()
-        mySettings.parse_file(SETTINGS_FILE,my_logger)
-        my_SendMail.SendNewMail("nico@lugil.be","Yafa: settings loaded at start",
-                                "dir name       = " +str(mySettings.name) + "\n" + 
-                                "temperature    = " +str(mySettings.temp) + "\n" +
-                                "clear          = " +str(mySettings.clear) + "\n" +
-                                "delta Heat ON  = " + str(mySettings.dHeat_on) + "\n" + 
-                                "delta Heat OFF = " + str(mySettings.dHeat_off) + "\n" + 
-                                "delta Cool ON  = " + str(mySettings.dCool_on) + "\n" + 
-                                "delta Cool OFF = " + str(mySettings.dCool_off) + "\n" 
-                                ,my_logger)
-    except Exception as e:
-        # TODO: if this doesnt work: make sure user gets informed
-        raise
 
     my_exc_handler = ExceptionHandler(10,"main")
 
@@ -109,6 +94,7 @@ def main():
     if myComm.wait_for_new_msg(10,my_logger):
         if myComm.read_command=="Init!":
             my_logger.debug("MCU OK!")
+            print("MCU OK");
             # TODO: send some info or so
         else:
             my_logger.debug("MCU error: unexpexted response")
@@ -119,6 +105,45 @@ def main():
         # TODO error
         my_logger.debug("MCU error no response")
         exit(1)
+
+    myComm.send("TSensor?","-")
+    if myComm.wait_for_new_msg(10,my_logger):
+        if myComm.read_command=="TSensor!":
+            if myComm.read_value=="ERROR":
+                TsensMsg="ERROR: temperature sensor not found - actuators will be off!";
+                my_SendMail.SendNewMail("nico@lugil.be","Yafa "+TsensMsg,TsensMsg,my_logger);
+                print("TSensor ERROR")
+            else:
+                TsensMsg="OK: Addr={0}".format(myComm.read_value);
+                print("TSensor OK! Addr={0}".format(myComm.read_value))
+        else:
+            my_logger.debug("MCU error: unexpexted response")
+            # print myComm.read_ID,myComm.read_command,myComm.read_value
+            # TODO: error and use UnExp! from MCU side
+            exit(1)
+    else:
+        # TODO error
+        my_logger.debug("MCU error no response")
+        exit(1)
+
+    try:
+        mySettings = ParseSettings()
+        mySettings.parse_file(SETTINGS_FILE,my_logger)
+        my_SendMail.SendNewMail("nico@lugil.be","Yafa: started!",
+                                "settings:\n" + 
+                                "   dir name       = " +str(mySettings.name) + "\n" + 
+                                "   temperature    = " +str(mySettings.temp) + "\n" +
+                                "   clear          = " +str(mySettings.clear) + "\n" +
+                                "   delta Heat ON  = " + str(mySettings.dHeat_on) + "\n" + 
+                                "   delta Heat OFF = " + str(mySettings.dHeat_off) + "\n" + 
+                                "   delta Cool ON  = " + str(mySettings.dCool_on) + "\n" + 
+                                "   delta Cool OFF = " + str(mySettings.dCool_off) + "\n" +
+                                "temperature sensor:\n  " +
+                                TsensMsg + "\n"
+                                ,my_logger)
+    except Exception as e:
+        # TODO: if this doesnt work: make sure user gets informed
+        raise
 
     print "waiting for 5sec now"
     time.sleep(5)  # because I am slow in opening console :)
@@ -135,6 +160,7 @@ def main():
     timer_checkwifi = TimedActions(62)
     timer_get_status = TimedActions(63)  
     timer_get_web_tasks = TimedActions(9)
+    #timer_debug = TimedActions(15)
 
     my_cnt=0
     perc_cool=0.
@@ -142,6 +168,10 @@ def main():
     while True:
         try:
             time.sleep(4)
+            #if timer_debug.enough_time_passed():
+            #    myComm.send("CO2?","-")
+            #    if myComm.wait_for_new_msg(10,my_logger):
+            #        print("New CO2 pulses received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))
             if timer_get_web_tasks.enough_time_passed():
                 if not YafaGlobals.task_q.empty():
                     mySettings.temp=YafaGlobals.task_q.get()
@@ -230,6 +260,7 @@ def main():
                 if myComm.wait_for_new_msg(10,my_logger):
                     my_logger.debug("New CO2 pulses received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))
                     pulses=myComm.read_value
+                    ##print("New CO2 pulses received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))
                 myComm.send("Act?","-")
                 if myComm.wait_for_new_msg(10,my_logger):
                     my_logger.debug("New Act values received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))

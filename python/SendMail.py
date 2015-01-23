@@ -66,6 +66,7 @@ class SendMail:
                 #print "   waiting for timer to end, time remaining={0}s".format(self.timer.get_remaining_time())
         except Exception as e:
             # didnt manage to send all mails - put timer and hope when timer end all works
+            #e.args += ('happened while inside SendPendingMail',)
             self.timer.set_interval(120)
             self.timer.reset_timer()
             self.exc_handler.log_exception(e,my_logger,self)
