@@ -157,7 +157,7 @@ def main():
 
     timer_log = TimedActions(301)
     timer_mail = TimedActions(61)
-    timer_checkwifi = TimedActions(62)
+    timer_checkwifi = TimedActions(12)   # TODO put larger again
     timer_get_status = TimedActions(63)  
     timer_get_web_tasks = TimedActions(9)
     #timer_debug = TimedActions(15)
@@ -189,11 +189,12 @@ def main():
                 try:
                     ping_delay = lib.pythonping.do_one("192.168.1.1",5)
                     if ping_delay is None:
-                        my_SendMail.SendNewMail("nico@lugil.be","Wifi lost","Wifi lost",my_logger)
-                        subprocess.call(["wifi","down"], stdout=open(os.devnull, 'wb'))
+                        #my_SendMail.SendNewMail("nico@lugil.be","Wifi lost","Wifi lost",my_logger)
+                        call(["wifi","down"], stdout=open(os.devnull, 'wb'))
                         time.sleep(5)
-                        subprocess.call("wifi", stdout=open(os.devnull, 'wb'))
+                        call("wifi", stdout=open(os.devnull, 'wb'))
                         time.sleep(5)
+                        my_SendMail.SendNewMail("nico@lugil.be","Wifi has been restarted","Wifi restarted",my_logger)
                 except Exception as e:
                     e.args += ('happened while trying to checkwifi',)
                     raise

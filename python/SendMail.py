@@ -72,7 +72,7 @@ class SendMail:
             self.exc_handler.log_exception(e,my_logger,self)
     def SendNewMail(self,tto,subject,body,my_logger):
         # TODO: max size
-        tup = (tto, subject, body)
+        tup = (tto, time.strftime("%d/%m/%Y %H:%M:%S")+subject, body)
         self.toSend.append(tup)
         #print "SendNewMail added to toSend: "+str(tup)+". Total mails to send: "+str(len(self.toSend))+"."
         self.SendPendingMail(my_logger)
