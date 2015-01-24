@@ -27,6 +27,7 @@ import StringIO
 import logging
 import logging.handlers
 from shutil import copyfile
+import os
 
 from BridgeComm import BridgeComm
 from ParseSettings import ParseSettings
@@ -187,14 +188,18 @@ def main():
                                             "settings should be saved",my_logger)
             if timer_checkwifi.enough_time_passed():
                 try:
-                    ping_delay = lib.pythonping.do_one("192.168.1.1",5)
+                    try:
+                        ping_delay = lib.pythonping.do_one("192.168.1.1",5)
+                    except Exception as e:
+                        # if no network we arrive here
+                        ping_delay=None
                     if ping_delay is None:
-                        #my_SendMail.SendNewMail("nico@lugil.be","Wifi lost","Wifi lost",my_logger)
                         call(["wifi","down"], stdout=open(os.devnull, 'wb'))
                         time.sleep(5)
                         call("wifi", stdout=open(os.devnull, 'wb'))
                         time.sleep(5)
-                        my_SendMail.SendNewMail("nico@lugil.be","Wifi has been restarted","Wifi restarted",my_logger)
+                        # TODO: keep track of this
+                        #my_SendMail.SendNewMail("nico@lugil.be","Wifi has been restarted","Wifi restarted",my_logger)
                 except Exception as e:
                     e.args += ('happened while trying to checkwifi',)
                     raise

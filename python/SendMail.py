@@ -66,13 +66,14 @@ class SendMail:
                 #print "   waiting for timer to end, time remaining={0}s".format(self.timer.get_remaining_time())
         except Exception as e:
             # didnt manage to send all mails - put timer and hope when timer end all works
-            #e.args += ('happened while inside SendPendingMail',)
+            e.args += ('happened while inside SendPendingMail',)
             self.timer.set_interval(120)
             self.timer.reset_timer()
-            self.exc_handler.log_exception(e,my_logger,self)
+            #self.exc_handler.log_exception(e,my_logger,self)   --> bit silly to send mail that mail failed TODO: log it and send later or so
+            self.exc_handler.log_exception(e,my_logger,None)
     def SendNewMail(self,tto,subject,body,my_logger):
         # TODO: max size
-        tup = (tto, time.strftime("%d/%m/%Y %H:%M:%S")+subject, body)
+        tup = (tto, time.strftime("%d/%m/%Y %H:%M:%S: ")+subject, body)
         self.toSend.append(tup)
         #print "SendNewMail added to toSend: "+str(tup)+". Total mails to send: "+str(len(self.toSend))+"."
         self.SendPendingMail(my_logger)
