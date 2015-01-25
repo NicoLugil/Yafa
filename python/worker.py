@@ -38,6 +38,7 @@ from SendMail import SendMail
 from ExceptionHandler import ExceptionHandler
 import private.pw
 import lib.pythonping
+import wifiToolbox
 
 import YafaGlobals
 import threading
@@ -127,6 +128,8 @@ def main():
         my_logger.debug("MCU error no response")
         exit(1)
 
+    wifi_info = "IP="+wifiToolbox.get_ip()+"   :  "+wifiToolbox.get_wifi_strength()
+
     try:
         mySettings = ParseSettings()
         mySettings.parse_file(SETTINGS_FILE,my_logger)
@@ -141,6 +144,8 @@ def main():
                                 "   delta Cool OFF = " + str(mySettings.dCool_off) + "\n" +
                                 "temperature sensor:\n  " +
                                 TsensMsg + "\n"
+                                "network:\n  " +
+                                wifi_info + "\n"
                                 ,my_logger)
     except Exception as e:
         # TODO: if this doesnt work: make sure user gets informed
