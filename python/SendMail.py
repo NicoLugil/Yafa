@@ -24,6 +24,7 @@ import private.pw
 from TimedActions import TimedActions
 from ExceptionHandler import ExceptionHandler
 
+
 class SendMail:
     def __init__(self):
         self.toSend = []

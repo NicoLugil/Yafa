@@ -38,12 +38,23 @@ def get_ip():
       else:
           return m.group(1)
 
+def tmp():
+    return '''
+         <form action="/settings" method="post">
+         Desired temperature: <input name="temp" type="text" value="'''+str(99)+'''" style="text-align: right" onfocus="this.select();"/>
+            <input value="Set" type="submit" />
+         </form>
+     '''
+
+
 def getall():
 
     info = get_wifi_strength()
     print(info)
     info = get_ip()
     print(info)
+
+    print(tmp())
 
 if __name__ == '__main__':
       getall()

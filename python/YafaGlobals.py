@@ -21,9 +21,14 @@ import time
 from Queue import Queue
 
 # TODO: wrap stuff in class ?
+# TODO: use single lock?
 
 task_q=Queue()
 
 lock_temperature=threading.Lock()
 temperature='Not yet measured'
+
+lock_current_settings=threading.Lock()
+set_temp='?'
+
 

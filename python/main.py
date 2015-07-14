@@ -39,9 +39,15 @@ def status():
 
 @get('/settings')
 def settings():
+    Tset='?'
+    YafaGlobals.lock_current_settings.acquire()
+    try:
+        Tset=str(YafaGlobals.set_temp)
+    finally:
+        YafaGlobals.lock_current_settings.release()
     return '''
          <form action="/settings" method="post">
-            Desired temperature: <input name="temp" type="text" />
+         Desired temperature: <input name="temp" type="text" value="'''+Tset+'''" style="text-align: right" onfocus="this.select();"/>
             <input value="Set" type="submit" />
          </form>
      '''

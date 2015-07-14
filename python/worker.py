@@ -64,6 +64,16 @@ def sendToSketch(command,value,my_logger,myComm):
         my_logger.error("MCU error no response-"+command)
         exit(1)
 
+# TODO: try ...
+def setTemp(value,my_logger,myComm):
+    sendToSketch("setTemp=",value,my_logger,myComm)
+    # TODO      lock timeout?
+    YafaGlobals.lock_current_settings.acquire()
+    try:
+       YafaGlobals.set_temp=value
+    finally:
+       YafaGlobals.lock_current_settings.release()
+
 def main():
 
     print("worker started...")
@@ -155,7 +165,7 @@ def main():
     time.sleep(5)  # because I am slow in opening console :)
 
     #initial config - for now just temp stuff
-    sendToSketch("setTemp=",mySettings.temp,my_logger,myComm)
+    setTemp(mySettings.temp,my_logger,myComm)
     sendToSketch("setdHeatOn=",mySettings.dHeat_on,my_logger,myComm)
     sendToSketch("setdHeatOff=",mySettings.dHeat_off,my_logger,myComm)
     sendToSketch("setdCoolOn=",mySettings.dCool_on,my_logger,myComm)
@@ -181,7 +191,7 @@ def main():
             if timer_get_web_tasks.enough_time_passed():
                 if not YafaGlobals.task_q.empty():
                     mySettings.temp=YafaGlobals.task_q.get()
-                    sendToSketch("setTemp=",mySettings.temp,my_logger,myComm)
+                    setTemp(mySettings.temp,my_logger,myComm)
                     # write xml file 
                     # TODO: chekc if was parsed succesfully
                     mySettings.write_file(SETTINGS_FILE,my_logger)
@@ -219,7 +229,7 @@ def main():
                     my_logger.debug(msg)
                     sys.stdout.flush()
                     mySettings.parse_string(msg,my_logger)
-                    sendToSketch("setTemp=",mySettings.temp,my_logger,myComm)
+                    setTemp(mySettings.temp,my_logger,myComm)
                     sendToSketch("setdHeatOn=",mySettings.dHeat_on,my_logger,myComm)
                     sendToSketch("setdHeatOff=",mySettings.dHeat_off,my_logger,myComm)
                     sendToSketch("setdCoolOn=",mySettings.dCool_on,my_logger,myComm)
