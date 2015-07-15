@@ -17,68 +17,37 @@
 # You should have received a copy of the GNU General Public License
 # along with Yafa. If not, see <http://www.gnu.org/licenses/>.
 
-import smtplib
 import time
-from email.mime.text import MIMEText
 import private.pw
-from TimedActions import TimedActions
-from ExceptionHandler import ExceptionHandler
+import pyzmail
 
 
 class SendMail:
     def __init__(self):
-        self.toSend = []
-        self.timer = TimedActions(0);
-        self.exc_handler = ExceptionHandler(10,"SendMail")
-    def PendingMailsToSend(self):
-        if len(self.toSend) != 0:
-            return True
+        # TODO: make these settings configurable
+        self.sender = (u'Yafa!', 'yafa@lugil.be')
+        self.recipients = [(u'Nico Lugil', 'nico@lugil.be')]
+        self.default_charset = 'iso-8859-1'
+        self.encoding = 'us-ascii'
+        self.smtp_host = 'smtp.gmail.com'
+        self.smtp_port = 587
+        self.smtp_mode = 'tls'
+        self.smtp_login= private.pw.myMailUser
+        self.smtp_password= private.pw.myMailPass
+    def SendMessage(self,subject,msg):
+        payload, mail_from, rcpt_to, msg_id=pyzmail.compose_mail(self.sender, self.recipients, unicode(subject), self.default_charset, (msg, self.encoding))
+        ret=pyzmail.send_mail(payload, mail_from, rcpt_to, self.smtp_host, self.smtp_port, self.smtp_mode, self.smtp_login, self.smtp_password)
+        if isinstance(ret, dict):
+            if ret:
+                str = 'failed recipients:'+', '.join(ret.keys())
+                raise SendMail.SendMailException(str)
+            #    print 'failed recipients:', ', '.join(ret.keys())
+            #else:
+            #    print 'success'
         else:
-            return False
-    def SendPendingMail(self,my_logger):
-        try:
-            my_logger.debug("SendPendingMail:")
-            if self.timer.enough_time_passed():
-                #print "   timer OK"
-                my_logger.debug("   timer OK!")
-                self.timer.set_interval(0)
-                USERNAME = private.pw.myMailUser
-                PASSWORD = private.pw.myMailPass
-                server = smtplib.SMTP('smtp.gmail.com:587')
-                server.ehlo_or_helo_if_needed()
-                server.starttls()
-                server.ehlo_or_helo_if_needed()
-                server.login(USERNAME,PASSWORD)
-                #print "before loop: len = "+str(len(self.toSend))
-                while self.toSend:
-                    item = self.toSend[0]
-                    msg = MIMEText(item[2])
-                    msg['Subject'] = item[1]
-                    msg['From'] = USERNAME
-                    msg['To'] = item[0]
-                    server.sendmail(USERNAME, item[0], msg.as_string())
-                    del self.toSend[0]
-                server.quit()
-                if len(self.toSend) != 0:
-                    self.toSend = []
-                    raise Exception("Unexpected len(self.toSend) != 0 in SendMail (len="+str(len(self.toSend))+")")
-            else: 
-                my_logger.debug("   waiting for timer to end, time remaining={0}s".format(self.timer.get_remaining_time()))
-                #print "   waiting for timer to end, time remaining={0}s".format(self.timer.get_remaining_time())
-        except Exception as e:
-            # didnt manage to send all mails - put timer and hope when timer end all works
-            e.args += ('happened while inside SendPendingMail',)
-            self.timer.set_interval(120)
-            self.timer.reset_timer()
-            #self.exc_handler.log_exception(e,my_logger,self)   --> bit silly to send mail that mail failed TODO: log it and send later or so
-            self.exc_handler.log_exception(e,my_logger,None)
-    def SendNewMail(self,tto,subject,body,my_logger):
-        # TODO: max size
-        tup = (tto, time.strftime("%d/%m/%Y %H:%M:%S: ")+subject, body)
-        self.toSend.append(tup)
-        #print "SendNewMail added to toSend: "+str(tup)+". Total mails to send: "+str(len(self.toSend))+"."
-        self.SendPendingMail(my_logger)
-
-
+            str = 'error:'+ret
+            raise SendMail.SendMailException(str)
+    class SendMailException(Exception):
+        pass
 
 

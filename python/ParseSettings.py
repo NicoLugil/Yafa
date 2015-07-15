@@ -17,13 +17,40 @@
 
 import sys
 import string
-import xml.etree.cElementTree as ET
 import logging
 import logging.handlers
+import copy
 
-# TODO
-# THIS IS FAR FROM FINISHED: NO ERROR CHECKING, VERY BASIC, EXPECTS VERY SIMPLE
-# XML STRUCTURE
+class Settings:
+    def __init__(self):
+        self.name='noname'
+        self.temp=20.0
+        self.dHeat_on=-0.2
+        self.dHeat_off=0.0
+        self.dCool_on=0.25
+        self.dCool_off=0.1
+
+class ParseSettings:
+    def loadFile(self,filename,settings):
+        newSettings = Settings()
+        try:
+            my_logger = logging.getLogger('MyLogger')
+        except:
+            # dont really know what to do in this case ... just raise for now
+            # TODO
+            raise
+        try:
+            iniparser = configparser.SafeConfigParser(inline_comment_prefixes=';')
+            iniparser.read(filename)
+            newSettings.name=iniparser.get('paths','name')
+            newSettings.temp=iniparser.get('temps','temp')
+            newSettings.dHeat_on=iniparser.get('temps','dHeat_on')
+            newSettings.dHeat_off=iniparser.get('temps','dHeat_off')
+            newSettings.dCool_on=iniparser.get('temps','dCool_on')
+            newSettings.dCool_off=iniparser.get('temps','dCool_off')
+            settings = copy.copy(newSettings)
+        except Exception as e:
+            my_logger.exception(e)
 
 def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")

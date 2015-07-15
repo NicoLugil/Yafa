@@ -74,19 +74,25 @@ def setTemp(value,my_logger,myComm):
     finally:
        YafaGlobals.lock_current_settings.release()
 
+###################################################################################################
+###################################################################################################
 def main():
 
-    print("worker started...")
 
-    try:
-        my_logger = logging.getLogger('MyLogger')
-        my_logger.setLevel(logging.ERROR)
-        handler = logging.handlers.RotatingFileHandler("/tmp/Yafa.log", maxBytes=16384, backupCount=2)
-        formatter = logging.Formatter("%(asctime)s : %(levelname)s - %(message)s","%Y-%m-%d %H:%M:%S")
-        handler.setFormatter(formatter)
-        my_logger.addHandler(handler)
-    except Exception as e:
-        raise
+    # setup logging
+    logging.raiseExceptions=0 
+    my_logger = logging.getLogger('MyLogger')
+    formatter = logging.Formatter("%(asctime)s : %(levelname)s - %(pathname)s : %(message)s ","%Y-%m-%d %H:%M:%S")
+    file_handler = logging.handlers.RotatingFileHandler("/tmp/Yafa.log", maxBytes=16384, backupCount=2)
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.DEBUG)
+    smtp_handler = YafaSMTPHandler(("smtp.gmail.com",587),'yafa@lugil.be', ['nico@lugil.be'], 'Error!', (private.pw.myMailUser, private.pw.myMailPass))
+    smtp_handler.setFormatter(formatter)
+    smtp_handler.setLevel(logging.DEBUG)
+    my_logger.addHandler(file_handler)
+    my_logger.addHandler(smtp_handler)
+
+    # read settings
 
     try:
         my_SendMail = SendMail()
