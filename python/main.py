@@ -20,14 +20,41 @@
 from bottle import run, route, get, post, request
 import threading
 import time
+import copy
 
 import YafaGlobals
 import worker
+
+my_error_message = "Oops something went wrong!"
 
 @route('/hello')
 def hello():
     return "Hello!"
 
+@route('/status')
+def status():
+    # TODO: timeout ?
+    try:
+        YafaGlobals.main_lock.acquire()
+        settings_copy=copy.copy(YafaGlobals.settings)
+    except:
+        return my_error_message+' : copy settings'
+    finally:
+        YafaGlobals.main_lock.release()
+    try:
+        msg="Current settings"
+        msg=msg+"</br> name: "+str(settings_copy.name)
+        msg=msg+"</br> temp: "+str(settings_copy.temp)
+        msg=msg+"</br> dHeat_on: "+str(settings_copy.dHeat_on)
+        msg=msg+"</br> dHeat_off: "+str(settings_copy.dHeat_off)
+        msg=msg+"</br> dCool_on: "+str(settings_copy.dCool_on)
+        msg=msg+"</br> dCool_off: "+str(settings_copy.dCool_off)
+        return msg
+    except:
+        raise
+        #return my_error_message
+
+"""
 @route('/status')
 def status():
     # TODO: timeout ?
@@ -57,6 +84,7 @@ def do_settings():
     temp = request.forms.get('temp')
     YafaGlobals.task_q.put(temp)
     return "<p>You succesfully set the temperature to "+str(temp)+"</p>"
+"""
 
 def main():
     threads=[]
@@ -64,6 +92,8 @@ def main():
     t.setDaemon(True)
     threads.append(t)
     t.start();
+
+    time.sleep(5) # quick hack to get worker going (reading settings, etc...)
 
     run(host='0.0.0.0', port=48963, debug=True)
 

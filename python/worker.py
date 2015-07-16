@@ -17,34 +17,37 @@
 # You should have received a copy of the GNU General Public License
 # along with Yafa. If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-import time
-import string
-import datetime
-from ftplib import FTP
-from subprocess import call
-import StringIO
+#import sys
+#import time
+#import string
+#import datetime
+#from ftplib import FTP
+#from subprocess import call
+#import StringIO
 import logging
 import logging.handlers
-from shutil import copyfile
-import os
+#from shutil import copyfile
+##import os
+#import threading
 
-from BridgeComm import BridgeComm
+#from BridgeComm import BridgeComm
 from ParseSettings import ParseSettings
-from TimedActions import TimedActions
-from GetMail import GetMail
-from FtpStuff import directory_exists
-from SendMail import SendMail
-from ExceptionHandler import ExceptionHandler
-import private.pw
-import lib.pythonping
-import wifiToolbox
+from YafaSMTPHandler import YafaSMTPHandler
+#from TimedActions import TimedActions
+#from GetMail import GetMail
+#from FtpStuff import directory_exists
+#from SendMail import SendMail
+#from ExceptionHandler import ExceptionHandler
+#import lib.pythonping
+#import wifiToolbox
 
-import YafaGlobals
-import threading
 
 # some defines
-SETTINGS_FILE = "/mnt/sda1/arduino/Yafa/settings.xml"
+PC=True
+if PC:
+    SETTINGS_FILE = "settings.ini"
+else:
+    SETTINGS_FILE = "/mnt/sda1/arduino/Yafa/settings.ini"
 
 def sendToSketch(command,value,my_logger,myComm):
     print "Sending " + command + " command"
@@ -78,6 +81,7 @@ def setTemp(value,my_logger,myComm):
 ###################################################################################################
 def main():
 
+    import private.pw
 
     # setup logging
     logging.raiseExceptions=0 
@@ -92,13 +96,26 @@ def main():
     my_logger.addHandler(file_handler)
     my_logger.addHandler(smtp_handler)
 
-    # read settings
+    # create globals 
+    try:
+        import YafaGlobals # gets default settings in variable settings
+    except Exception as e:
+        my_logger.exception('importing essential vars at startup failed - exiting the program')
+        return
 
+    # read settings
+    try:
+        myParser = ParseSettings()
+        myParser.loadFile(SETTINGS_FILE,YafaGlobals.settings)
+    except Exception as e:
+        my_logger.exception('reading settings at startup failed - trying to continue, probably with default settings')
+
+"""
     try:
         my_SendMail = SendMail()
     #   my_SendMail.SendNewMail("nico@lugil.be","Yun start","I started",my_logger)
     except Exception as e:
-        raise
+        my_logger.exception(
 
 
     my_exc_handler = ExceptionHandler(10,"main")
@@ -359,6 +376,7 @@ def main():
             my_exc_handler.log_exception(e,my_logger,my_SendMail)
             #copyfile("/tmp/Yafa.log","/mnt/sda1/arduino/Yafa.log")
             #SendMail("nico@lugil.be","Yun Exception",str(message))
+"""
 
 if __name__ == '__main__':
     main()

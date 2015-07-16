@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Yafa. If not, see <http://www.gnu.org/licenses/>.
 
-
+from ParseSettings import Settings
 import threading
 import time
 from Queue import Queue
@@ -25,10 +25,13 @@ from Queue import Queue
 
 task_q=Queue()
 
-lock_temperature=threading.Lock()
-temperature='Not yet measured'
+main_lock=threading.Lock()
+settings = Settings()
 
-lock_current_settings=threading.Lock()
-set_temp='?'
+#lock_temperature=threading.Lock()
+#temperature='Not yet measured'
+#
+#lock_current_settings=threading.Lock()
+#set_temp='?'
 
 
