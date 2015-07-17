@@ -21,12 +21,19 @@ import time
 from Queue import Queue
 
 # TODO: wrap stuff in class ?
-# TODO: use single lock?
+# TODO: use single/multi lock?
 
 task_q=Queue()
 
 main_lock=threading.Lock()
+
 settings = Settings()
+
+class Mode:
+    boot, wait_for_start, requested2run, run = ["boot", "wait_for_start", "requested2run", "run"]
+
+mode = Mode.boot
+timeleft = 5*60  # serves as initial value for worker countdown
 
 #lock_temperature=threading.Lock()
 #temperature='Not yet measured'

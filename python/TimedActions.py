@@ -19,7 +19,12 @@ import sys
 import string
 import time
 
-class TimedActions:
+"""
+ Class used to space actions in time by at least interval seconds.
+ First time enough_time_passed is cheked it will return true, 
+ from then only if interval seconds have passed since the last True
+"""
+class IntervalTimer:
     def __init__(self,interval):
         self.iv=interval;
         self.last_time=time.time()  # seconds since epoch
@@ -45,3 +50,31 @@ class TimedActions:
                 return True
             else:
                 return False
+
+"""
+ Single countdown:
+     start (re)starts it
+"""
+class CountDownTimer:
+    def __init__(self,interval):
+        self.iv=interval
+        self.start_time=time.time()
+    def set_interval(self,interval):
+        self.iv=interval;
+    def start(self):
+        self.start_time=time.time()
+    def get_remaining_time(self):
+        time_passed = (time.time()-self.start_time)
+        if time_passed >= self.iv:
+            return 0
+        else:
+            return (self.iv-time_passed)
+    def end(self):
+        self.iv=0
+    def is_time_passed(self):
+        if(self.get_remaining_time()==0):
+            return True
+        else:
+            return False
+
+

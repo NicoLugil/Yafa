@@ -18,7 +18,7 @@
 # along with Yafa. If not, see <http://www.gnu.org/licenses/>.
 
 #import sys
-#import time
+import time
 #import string
 #import datetime
 #from ftplib import FTP
@@ -33,6 +33,7 @@ import logging.handlers
 #from BridgeComm import BridgeComm
 from ParseSettings import ParseSettings
 from YafaSMTPHandler import YafaSMTPHandler
+from TimedActions import CountDownTimer
 #from TimedActions import TimedActions
 #from GetMail import GetMail
 #from FtpStuff import directory_exists
@@ -103,12 +104,51 @@ def main():
         my_logger.exception('importing essential vars at startup failed - exiting the program')
         return
 
-    # read settings
+    # read settings, and go to wait_for_start
     try:
         myParser = ParseSettings()
         myParser.loadFile(SETTINGS_FILE,YafaGlobals.settings)
+        YafaGlobals.mode=YafaGlobals.Mode.wait_for_start
     except Exception as e:
         my_logger.exception('reading settings at startup failed - trying to continue, probably with default settings')
+
+    # count down to run phase, and communicate with web stuff
+    try:
+        # init count down
+        YafaGlobals.main_lock.acquire()
+        try:
+            myDownCount = CountDownTimer(YafaGlobals.timeleft)
+            myDownCount.start()
+        except Exception as e:
+            raise
+        finally:
+            YafaGlobals.main_lock.release()
+        while not myDownCount.is_time_passed():
+            #print('remaining time '+str(int(myDownCount.get_remaining_time())))
+            YafaGlobals.main_lock.acquire()
+            try:
+                YafaGlobals.timeleft=int(myDownCount.get_remaining_time())
+                if(YafaGlobals.mode==YafaGlobals.Mode.requested2run):
+                    myDownCount.end()
+                    YafaGlobals.timeleft=0
+            except Exception as e:
+                raise
+            finally:
+                YafaGlobals.main_lock.release()
+            time.sleep(3)
+    except Exception as e:
+        my_logger.exception('starting CountDown failed - skipping wait phase')
+
+    YafaGlobals.main_lock.acquire()
+    try:
+        YafaGlobals.timeleft=0
+        YafaGlobals.mode=YafaGlobals.Mode.run
+    except Exception as e:
+        raise
+    finally:
+        YafaGlobals.main_lock.release()
+
+    print('worker started')
 
 """
     try:
