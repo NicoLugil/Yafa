@@ -55,6 +55,7 @@ class ParseSettings:
             settings.dHeat_off=newSettings.dHeat_off
             settings.dCool_on=newSettings.dCool_on
             settings.dCool_off=newSettings.dCool_off
+            self.my_logger.info("settings restored from file!")
         except Exception as e:
             self.my_logger.exception('Loading settings file failed - keeping old settings')
     def saveFile(self,filename,settings):
@@ -71,6 +72,7 @@ class ParseSettings:
             iniparser.set('temps','dCool_off',str(settings.dCool_off))
             with open(filename,'w') as inifile:
                 iniparser.write(inifile)
+            self.my_logger.info("New settings saved to file!")
         except Exception as e:
             self.my_logger.exception('Saving settings file failed - these will be lost')
 

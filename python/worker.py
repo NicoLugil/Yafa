@@ -17,66 +17,100 @@
 # You should have received a copy of the GNU General Public License
 # along with Yafa. If not, see <http://www.gnu.org/licenses/>.
 
-#import sys
+import sys
 import time
 #import string
 #import datetime
 #from ftplib import FTP
-#from subprocess import call
+from subprocess import call
 #import StringIO
 import logging
 import logging.handlers
+import copy
 #from shutil import copyfile
 ##import os
 #import threading
 
-#from BridgeComm import BridgeComm
 from ParseSettings import ParseSettings
 from YafaSMTPHandler import YafaSMTPHandler
 from TimedActions import CountDownTimer
-#from TimedActions import TimedActions
+from TimedActions import IntervalTimer
 #from GetMail import GetMail
 #from FtpStuff import directory_exists
 #from SendMail import SendMail
-#from ExceptionHandler import ExceptionHandler
-#import lib.pythonping
-#import wifiToolbox
+import lib.pythonping
+import wifiToolbox
 
 
-# some defines
-PC=True
+# this sript can work up to a point on my PC
+PC=False
 if PC:
     SETTINGS_FILE = "settings.ini"
 else:
     SETTINGS_FILE = "/mnt/sda1/arduino/Yafa/settings.ini"
+    from BridgeComm import BridgeComm
 
-def sendToSketch(command,value,my_logger,myComm):
-    print "Sending " + command + " command"
-    myComm.send(command,str(value))
-    if myComm.wait_for_new_msg(10,my_logger):
-        if myComm.read_command==(command):
-            my_logger.debug(command+"OK!")
-            # TODO: check value within apprximation
-        else:
-            print "got wrong " + command + " ack:"+myComm.read_command
-            my_logger.error("MCU error: unexpexted response-"+command)
-            # TODO: error 
-            exit(1)
-    else:
-        # TODO error
-        print "got no " + command + " ack"
-        my_logger.error("MCU error no response-"+command)
-        exit(1)
+# TODO: lots of cleanup try/except : use more consistently
 
-# TODO: try ...
-def setTemp(value,my_logger,myComm):
-    sendToSketch("setTemp=",value,my_logger,myComm)
-    # TODO      lock timeout?
-    YafaGlobals.lock_current_settings.acquire()
+# TODO: see if YafaGlobals protected by lock everywhere + minimize time spent in it
+
+def sendToSketch(command,value,myComm):
     try:
-       YafaGlobals.set_temp=value
-    finally:
-       YafaGlobals.lock_current_settings.release()
+        my_logger = logging.getLogger('MyLogger')
+        my_logger.debug("Sending " + command + " command")
+        myComm.send(command,str(value))
+        if myComm.wait_for_new_msg(10,my_logger):
+            # this one only works for commands where the same is returned!!!
+            if myComm.read_command==(command):
+                my_logger.debug("    "+command+"OK!")
+                # TODO: check value within approximation
+            else:
+                raise YafaWorkerException("MCU error: got wrong " + command + " ack:"+myComm.read_command)
+        else:
+            raise YafaWorkerException('MCU error no response after '+command)
+    except Exception as e:
+        my_logger.exception("Error in sending command to sketch")
+
+def getFromSketch(command,myComm,expected_return_command):
+    try:
+        my_logger = logging.getLogger('MyLogger')
+        my_logger.debug("getting from sketch: Sending " + command + " command")
+        myComm.send(command,"-")
+        if myComm.wait_for_new_msg(10,my_logger):
+            # this one only works for commands where the same is returned!!!
+            if myComm.read_command==expected_return_command:
+                my_logger.debug("    "+command+"OK!")
+                return myComm.read_value
+            else:
+                raise YafaWorkerException("MCU error: got wrong " + command + " ack:"+myComm.read_command)
+        else:
+            raise YafaWorkerException('MCU error no response after '+command)
+    except Exception as e:
+        my_logger.exception("Error in sending command to sketch")
+
+def log_settings(the_settings,TsensMsg):
+    my_logger = logging.getLogger('MyLogger')
+    # get wifi info
+    wifi_info = "IP="+wifiToolbox.get_ip()+"   :  "+wifiToolbox.get_wifi_strength()
+
+    msg = "Yafa: started!\n" + "settings:\n" + "   name           = " +str(the_settings.name) + "\n" + "   temperature    = " +str(the_settings.temp) + "\n" + "   delta Heat ON  = " + str(the_settings.dHeat_on) + "\n" + "   delta Heat OFF = " + str(the_settings.dHeat_off) + "\n" + "   delta Cool ON  = " + str(the_settings.dCool_on) + "\n" + "   delta Cool OFF = " + str(the_settings.dCool_off) + "\n" + "temperature sensor:\n  " + TsensMsg + "\n" "network:\n  " + wifi_info + "\n"
+    my_logger.info(msg)
+
+def settings_tosketch(the_settings,myComm):
+    my_logger = logging.getLogger('MyLogger')
+    sendToSketch("setTemp=",the_settings.temp,myComm)
+    sendToSketch("setdHeatOn=",the_settings.dHeat_on,myComm)
+    sendToSketch("setdHeatOff=",the_settings.dHeat_off,myComm)
+    sendToSketch("setdCoolOn=",the_settings.dCool_on,myComm)
+    sendToSketch("setdCoolOff=",the_settings.dCool_off,myComm)
+    my_logger.debug('all inital setting succesfully sent to sketch ')
+
+
+###################################################################################################
+###################################################################################################
+
+class YafaWorkerException(Exception):
+    pass
 
 ###################################################################################################
 ###################################################################################################
@@ -85,17 +119,22 @@ def main():
     import private.pw
 
     # setup logging
-    logging.raiseExceptions=0 
+    logging.raiseExceptions=0   # error in logging will be suppressed
     my_logger = logging.getLogger('MyLogger')
+    my_logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s : %(levelname)s - %(pathname)s : %(message)s ","%Y-%m-%d %H:%M:%S")
     file_handler = logging.handlers.RotatingFileHandler("/tmp/Yafa.log", maxBytes=16384, backupCount=2)
     file_handler.setFormatter(formatter)
     file_handler.setLevel(logging.DEBUG)
-    smtp_handler = YafaSMTPHandler(("smtp.gmail.com",587),'yafa@lugil.be', ['nico@lugil.be'], 'Error!', (private.pw.myMailUser, private.pw.myMailPass))
+    smtp_handler = YafaSMTPHandler(("smtp.gmail.com",587),'yafa@lugil.be', ['nico@lugil.be'], 'Yafa logging message', (private.pw.myMailUser, private.pw.myMailPass))
     smtp_handler.setFormatter(formatter)
-    smtp_handler.setLevel(logging.DEBUG)
+    smtp_handler.setLevel(logging.INFO)
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setFormatter(formatter)
+    stream_handler.setLevel(logging.DEBUG)
     my_logger.addHandler(file_handler)
     my_logger.addHandler(smtp_handler)
+    my_logger.addHandler(stream_handler)
 
     # create globals 
     try:
@@ -105,12 +144,18 @@ def main():
         return
 
     # read settings, and go to wait_for_start
+    YafaGlobals.main_lock.acquire()
     try:
-        myParser = ParseSettings()
-        myParser.loadFile(SETTINGS_FILE,YafaGlobals.settings)
-        YafaGlobals.mode=YafaGlobals.Mode.wait_for_start
+        try:
+            myParser = ParseSettings()
+            myParser.loadFile(SETTINGS_FILE,YafaGlobals.settings)
+            YafaGlobals.mode=YafaGlobals.Mode.wait_for_start
+        except Exception as e:
+            my_logger.exception('reading settings at startup failed - trying to continue, probably with default settings')
     except Exception as e:
-        my_logger.exception('reading settings at startup failed - trying to continue, probably with default settings')
+        raise
+    finally:
+        YafaGlobals.main_lock.release()
 
     # count down to run phase, and communicate with web stuff
     try:
@@ -124,146 +169,130 @@ def main():
         finally:
             YafaGlobals.main_lock.release()
         while not myDownCount.is_time_passed():
-            #print('remaining time '+str(int(myDownCount.get_remaining_time())))
+            my_logger.debug('starting CountDown')
+            time.sleep(3)
             YafaGlobals.main_lock.acquire()
             try:
                 YafaGlobals.timeleft=int(myDownCount.get_remaining_time())
                 if(YafaGlobals.mode==YafaGlobals.Mode.requested2run):
                     myDownCount.end()
                     YafaGlobals.timeleft=0
+                    YafaGlobals.mode=YafaGlobals.Mode.run
+                    local_copy_of_settings = copy.copy(YafaGlobals.settings)
             except Exception as e:
                 raise
             finally:
                 YafaGlobals.main_lock.release()
-            time.sleep(3)
+            if YafaGlobals.mode==YafaGlobals.Mode.run:
+                # received new settings - save them
+                myParser.saveFile(SETTINGS_FILE,local_copy_of_settings)
     except Exception as e:
         my_logger.exception('starting CountDown failed - skipping wait phase')
 
+    # to run phase - copy settings to local var
+    my_logger.info("going to run phase now")
     YafaGlobals.main_lock.acquire()
     try:
         YafaGlobals.timeleft=0
         YafaGlobals.mode=YafaGlobals.Mode.run
+        local_copy_of_settings = copy.copy(YafaGlobals.settings)
     except Exception as e:
         raise
     finally:
         YafaGlobals.main_lock.release()
 
-    print('worker started')
-
-"""
-    try:
-        my_SendMail = SendMail()
-    #   my_SendMail.SendNewMail("nico@lugil.be","Yun start","I started",my_logger)
-    except Exception as e:
-        my_logger.exception(
-
-
-    my_exc_handler = ExceptionHandler(10,"main")
-
     # reset mcu and establish connection
-    my_logger.debug("resetting mcu now")
-    call(["reset-mcu"])
-    time.sleep(5+6)
-    myComm = BridgeComm()
-    myComm.send("Init?","-")
-    if myComm.wait_for_new_msg(10,my_logger):
-        if myComm.read_command=="Init!":
-            my_logger.debug("MCU OK!")
-            print("MCU OK");
-            # TODO: send some info or so
-        else:
-            my_logger.debug("MCU error: unexpexted response")
-            # print myComm.read_ID,myComm.read_command,myComm.read_value
-            # TODO: error and use UnExp! from MCU side
-            exit(1)
-    else:
-        # TODO error
-        my_logger.debug("MCU error no response")
-        exit(1)
-
-    myComm.send("TSensor?","-")
-    if myComm.wait_for_new_msg(10,my_logger):
-        if myComm.read_command=="TSensor!":
-            if myComm.read_value=="ERROR":
-                TsensMsg="ERROR: temperature sensor not found - actuators will be off!";
-                my_SendMail.SendNewMail("nico@lugil.be","Yafa "+TsensMsg,TsensMsg,my_logger);
-                print("TSensor ERROR")
-            else:
-                TsensMsg="OK: Addr={0}".format(myComm.read_value);
-                print("TSensor OK! Addr={0}".format(myComm.read_value))
-        else:
-            my_logger.debug("MCU error: unexpexted response")
-            # print myComm.read_ID,myComm.read_command,myComm.read_value
-            # TODO: error and use UnExp! from MCU side
-            exit(1)
-    else:
-        # TODO error
-        my_logger.debug("MCU error no response")
-        exit(1)
-
-    wifi_info = "IP="+wifiToolbox.get_ip()+"   :  "+wifiToolbox.get_wifi_strength()
-
     try:
-        mySettings = ParseSettings()
-        mySettings.parse_file(SETTINGS_FILE,my_logger)
-        my_SendMail.SendNewMail("nico@lugil.be","Yafa: started!",
-                                "settings:\n" + 
-                                "   dir name       = " +str(mySettings.name) + "\n" + 
-                                "   temperature    = " +str(mySettings.temp) + "\n" +
-                                "   clear          = " +str(mySettings.clear) + "\n" +
-                                "   delta Heat ON  = " + str(mySettings.dHeat_on) + "\n" + 
-                                "   delta Heat OFF = " + str(mySettings.dHeat_off) + "\n" + 
-                                "   delta Cool ON  = " + str(mySettings.dCool_on) + "\n" + 
-                                "   delta Cool OFF = " + str(mySettings.dCool_off) + "\n" +
-                                "temperature sensor:\n  " +
-                                TsensMsg + "\n"
-                                "network:\n  " +
-                                wifi_info + "\n"
-                                ,my_logger)
-    except Exception as e:
-        # TODO: if this doesnt work: make sure user gets informed
+        my_logger.debug("resetting mcu now")
+        call(["reset-mcu"])
+        time.sleep(5+6)
+        myComm = BridgeComm()
+        myComm.send("Init?","-")
+        if myComm.wait_for_new_msg(10,my_logger):
+            if myComm.read_command=="Init!":
+                my_logger.debug("MCU OK!")
+            else:
+                raise YafaWorkerException('MCU error: unexpected response after Init? '+myComm.read_command)
+                # TODO: error and use UnExp! from MCU side
+        else:
+            raise YafaWorkerException('MCU error no response after Init?')
+    except:
+        my_logger.exception('Resetting MCU failed - exiting')
         raise
 
-    print "waiting for 5sec now"
-    time.sleep(5)  # because I am slow in opening console :)
+    # get T sensor info
+    try:
+        TsensMsg="?"
+        myComm.send("TSensor?","-")
+        if myComm.wait_for_new_msg(10,my_logger):
+            if myComm.read_command=="TSensor!":
+                if myComm.read_value=="ERROR":
+                    TsensMsg="ERROR: temperature sensor not found - actuators will be off!"
+                    my_logger.error(TsensMsg)
+                else:
+                    TsensMsg="TSensor OK! Addr={0}".format(myComm.read_value)
+                    my_logger.debug(TsensMsg)
+            else:
+                raise YafaWorkerException('MCU error: unexpected response after TSensor? '+myComm.read_command)
+                # TODO: error and use UnExp! from MCU side
+        else:
+            raise YafaWorkerException('MCU error no response after TSensor?')
+    except:
+        my_logger.exception('problems finding T sensor - exiting')
+        raise
+
+    # inform about settings, etc...
+    try:
+        log_settings(local_copy_of_settings,TsensMsg)
+    except Exception as e:
+        my_logger.exception('cant inform about settings - exiting')
+        raise 
+
+    #print "waiting for 5sec now"
+    #time.sleep(5)  # because I am slow in opening console :)
 
     #initial config - for now just temp stuff
-    setTemp(mySettings.temp,my_logger,myComm)
-    sendToSketch("setdHeatOn=",mySettings.dHeat_on,my_logger,myComm)
-    sendToSketch("setdHeatOff=",mySettings.dHeat_off,my_logger,myComm)
-    sendToSketch("setdCoolOn=",mySettings.dCool_on,my_logger,myComm)
-    sendToSketch("setdCoolOff=",mySettings.dCool_off,my_logger,myComm)
+    try:
+        settings_tosketch(local_copy_of_settings,myComm)
+    except Exception as e:
+        my_logger.exception('problem sending initial settings to sketch - exiting')
+        raise 
 
-    timer_log = TimedActions(301)
-    timer_mail = TimedActions(61)
-    timer_checkwifi = TimedActions(12)   # TODO put larger again
-    timer_get_status = TimedActions(63)  
-    timer_get_web_tasks = TimedActions(9)
-    #timer_debug = TimedActions(15)
+    # set timers for different kind of recurring tasks
+    timer_log = IntervalTimer(301)
+    timer_mail = IntervalTimer(61)
+    timer_checkwifi = IntervalTimer(12)   # TODO put larger again
+    timer_get_status = IntervalTimer(63)  
+    timer_get_web_tasks = IntervalTimer(9)
+    #timer_debug = IntervalTimer(15)
 
     my_cnt=0
     perc_cool=0.
     perc_heat=0.
     while True:
         try:
-            time.sleep(4)
-            #if timer_debug.enough_time_passed():
-            #    myComm.send("CO2?","-")
-            #    if myComm.wait_for_new_msg(10,my_logger):
-            #        print("New CO2 pulses received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))
+            time.sleep(2)  # TODO: shorter/longer?
+            ## web stuff
             if timer_get_web_tasks.enough_time_passed():
-                if not YafaGlobals.task_q.empty():
-                    mySettings.temp=YafaGlobals.task_q.get()
-                    setTemp(mySettings.temp,my_logger,myComm)
-                    # write xml file 
-                    # TODO: chekc if was parsed succesfully
-                    mySettings.write_file(SETTINGS_FILE,my_logger)
-                    my_SendMail.SendNewMail("nico@lugil.be","Yafa: temperature set to "+str(mySettings.temp),
-                                            "delta Heat ON  = " + str(mySettings.dHeat_on) + "\n" + 
-                                            "delta Heat OFF = " + str(mySettings.dHeat_off) + "\n" + 
-                                            "delta Cool ON  = " + str(mySettings.dCool_on) + "\n" + 
-                                            "delta Cool OFF = " + str(mySettings.dCool_off) + "\n" + 
-                                            "settings should be saved",my_logger)
+                try:
+                    YafaGlobals.main_lock.acquire()
+                    try:
+                        new_settings=False;
+                        if(YafaGlobals.mode==YafaGlobals.Mode.requested2run):
+                            YafaGlobals.mode=YafaGlobals.Mode.run
+                            local_copy_of_settings = copy.copy(YafaGlobals.settings)
+                            new_settings=True;
+                    except Exception as e:
+                        raise
+                    finally:
+                        YafaGlobals.main_lock.release()
+                    if new_settings:
+                        # write ini file 
+                        myParser.saveFile(SETTINGS_FILE,local_copy_of_settings)
+                        log_settings(local_copy_of_settings,TsensMsg)   # TODO: update TsensMsg
+                except Exception as e:
+                    my_logger.exception("problem checking web stuff")
+            ## check wifi
             if timer_checkwifi.enough_time_passed():
                 try:
                     try:
@@ -276,11 +305,28 @@ def main():
                         time.sleep(5)
                         call("wifi", stdout=open(os.devnull, 'wb'))
                         time.sleep(5)
-                        # TODO: keep track of this
-                        #my_SendMail.SendNewMail("nico@lugil.be","Wifi has been restarted","Wifi restarted",my_logger)
+                        # TODO: keep better track of this
+                        my_logger.info('wifi lost and restarted')
                 except Exception as e:
-                    e.args += ('happened while trying to checkwifi',)
-                    raise
+                    my_logger.exception("problem checking wifi")
+            ## read current temperature
+            if timer_get_status.enough_time_passed():
+                try:
+                    measured_temp = getFromSketch("Temp?",myComm,"Temp=")
+                    YafaGlobals.lock_temperature.acquire()
+                    try:
+                        YafaGlobals.temperature=measured_temp
+                    except:
+                        raise
+                    finally:
+                        YafaGlobals.lock_temperature.release()
+                except:
+                    my_logger.exception("problem getting temperature from sketch")
+        except:
+            my_logger.exception("Error in main loop, will try to continue")
+
+
+"""
             if timer_mail.enough_time_passed():
                 try:
                     new_mail, msg = GetMail(my_logger)
@@ -308,19 +354,6 @@ def main():
                                             "delta Cool ON  = " + str(mySettings.dCool_on) + "\n" + 
                                             "delta Cool OFF = " + str(mySettings.dCool_off) + "\n" + 
                                             "settings should be saved",my_logger)
-            if timer_get_status.enough_time_passed():
-                #TODO: raise if no response
-                #      lock timeout?
-                myComm.send("Temp?","-")
-                if myComm.wait_for_new_msg(10,my_logger):
-                    # TODO: check response comand!!!
-                    YafaGlobals.lock_temperature.acquire()
-                    try:
-                        YafaGlobals.temperature=myComm.read_value
-                    finally:
-                        YafaGlobals.lock_temperature.release()
-                else:
-                    print "NO answer :("
             if timer_log.enough_time_passed():
                 #TODO: raise if no response
                 myStringIO = StringIO.StringIO()
@@ -412,10 +445,6 @@ def main():
                 myStringIO.close()
                 sys.stdout.flush()
                 my_SendMail.SendPendingMail(my_logger) # TODO: do less often
-        except Exception as e:
-            my_exc_handler.log_exception(e,my_logger,my_SendMail)
-            #copyfile("/tmp/Yafa.log","/mnt/sda1/arduino/Yafa.log")
-            #SendMail("nico@lugil.be","Yun Exception",str(message))
 """
 
 if __name__ == '__main__':

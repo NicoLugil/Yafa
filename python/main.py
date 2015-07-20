@@ -38,6 +38,13 @@ def hello():
 def root():
     # TODO: timeout ?
     try:
+        YafaGlobals.lock_temperature.acquire()
+        temp_copy=copy.copy(YafaGlobals.temperature)
+    except:
+        return my_error_message+' : copy temperature'
+    finally:
+        YafaGlobals.lock_temperature.release()
+    try:
         YafaGlobals.main_lock.acquire()
         settings_copy=copy.copy(YafaGlobals.settings)
         mode_copy=copy.copy(YafaGlobals.mode)
@@ -75,6 +82,7 @@ def root():
             msg = msg + '<br/>&nbsp;&nbsp;&nbsp;    2. change settings <a href="/settings">here</a>, and start immediately'
         if(mode_copy==YafaGlobals.Mode.run):
             msg = msg + '<br/>Settings can be changed <a href="/settings">here</a>'
+            msg = msg + "</br></br></br>Last measured temperature: " + str(temp_copy) + " C"
         if(mode_copy==YafaGlobals.Mode.requested2run):
             msg = msg + '<br/>will start asap...please refresh in a couple of seconds'
         return msg

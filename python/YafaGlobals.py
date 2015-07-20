@@ -26,19 +26,13 @@ from Queue import Queue
 task_q=Queue()
 
 main_lock=threading.Lock()
-
 settings = Settings()
-
 class Mode:
     boot, wait_for_start, requested2run, run = ["boot", "wait_for_start", "requested2run", "run"]
-
 mode = Mode.boot
-timeleft = 5*60  # serves as initial value for worker countdown
+timeleft = 3 #*60  # serves as initial value for worker countdown
 
-#lock_temperature=threading.Lock()
-#temperature='Not yet measured'
-#
-#lock_current_settings=threading.Lock()
-#set_temp='?'
+lock_temperature=threading.Lock()
+temperature='Not yet measured'
 
 

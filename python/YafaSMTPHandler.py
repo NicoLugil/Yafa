@@ -67,6 +67,10 @@ class YafaSMTPHandler(logging.handlers.SMTPHandler):
             print e
             pass # we will try again later
     def emit(self, record):
+        ## should this really go here? Isnt handler doign this laready? for now checking levels myself
+        ## see how interacts with logger levle
+        ##print record.levelno
+        ##print self.getEffectiveLevel
         try:
             self.configMailer()
             msg = self.format(record)
