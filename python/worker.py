@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Yafa. If not, see <http://www.gnu.org/licenses/>.
 
+import io
 import sys
 import time
 #import string
@@ -35,7 +36,7 @@ from ParseSettings import ParseSettings
 from YafaSMTPHandler import YafaSMTPHandler
 from TimedActions import CountDownTimer
 from TimedActions import IntervalTimer
-#from GetMail import GetMail
+from GetMail import GetMail
 #from FtpStuff import directory_exists
 #from SendMail import SendMail
 import lib.pythonping
@@ -322,38 +323,45 @@ def main():
                         YafaGlobals.lock_temperature.release()
                 except:
                     my_logger.exception("problem getting temperature from sketch")
+            ## new ini file via mail?
+            if timer_mail.enough_time_passed():
+                try:
+                    try:
+                        new_mail, msg = GetMail()
+                    except Exception as e:
+                        my_logger.exception("problem with GetMail")
+                    if new_mail:
+                        # write mail to tmp file
+                        with open(".mailed_settings","w") as text_file:
+                            msg = msg.replace('\r','')
+                            text_file.write(msg)
+                        # try parsing it into YafaGlobals.settings
+                        YafaGlobals.main_lock.acquire()
+                        try:
+                            try:
+                                myParser = ParseSettings()
+                                myParser.loadFile(".mailed_settings",YafaGlobals.settings)
+                                # TODO: go to another phase? start right away?
+                                local_copy_of_settings = copy.copy(YafaGlobals.settings)
+                            except Exception as e:
+                                my_logger.exception('parsing mail settings failed')
+                        except Exception as e:
+                            raise
+                        finally:
+                            YafaGlobals.main_lock.release()
+                        try:
+                            # try saving them
+                            myParser.saveFile(SETTINGS_FILE,local_copy_of_settings)
+                            log_settings(local_copy_of_settings,TsensMsg)   # TODO: update TsensMsg
+                        except Exception as e:
+                            my_logger.exception("problem saving new settings received by mail")
+                except:
+                    my_logger.exception("problem checking mail")
         except:
             my_logger.exception("Error in main loop, will try to continue")
 
 
 """
-            if timer_mail.enough_time_passed():
-                try:
-                    new_mail, msg = GetMail(my_logger)
-                except Exception as e:
-                    e.args += ('happened while trying to GetMail',)
-                    raise
-                if new_mail:
-                    # TODO: work out - for now very "dedicated"
-                    my_logger.debug(msg)
-                    sys.stdout.flush()
-                    mySettings.parse_string(msg,my_logger)
-                    setTemp(mySettings.temp,my_logger,myComm)
-                    sendToSketch("setdHeatOn=",mySettings.dHeat_on,my_logger,myComm)
-                    sendToSketch("setdHeatOff=",mySettings.dHeat_off,my_logger,myComm)
-                    sendToSketch("setdCoolOn=",mySettings.dCool_on,my_logger,myComm)
-                    sendToSketch("setdCoolOff=",mySettings.dCool_off,my_logger,myComm)
-                    # write xml file 
-                    # TODO: chekc if was parsed succesfully
-                    mySettings.write_file(SETTINGS_FILE,my_logger)
-                    my_cnt=0   # quick hack for logging TODO
-
-                    my_SendMail.SendNewMail("nico@lugil.be","Yafa: temperature set to "+str(mySettings.temp),
-                                            "delta Heat ON  = " + str(mySettings.dHeat_on) + "\n" + 
-                                            "delta Heat OFF = " + str(mySettings.dHeat_off) + "\n" + 
-                                            "delta Cool ON  = " + str(mySettings.dCool_on) + "\n" + 
-                                            "delta Cool OFF = " + str(mySettings.dCool_off) + "\n" + 
-                                            "settings should be saved",my_logger)
             if timer_log.enough_time_passed():
                 #TODO: raise if no response
                 myStringIO = StringIO.StringIO()

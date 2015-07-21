@@ -30,7 +30,17 @@ from SendMail import SendMail
 import logging
 import logging.handlers
 
-def GetMail(my_logger):
+# TODO: very old code - clean it !
+
+
+def GetMail():
+    try:
+        my_logger = logging.getLogger('MyLogger')
+    except:
+        # dont really know what to do in this case ... just raise for now
+        # TODO
+        raise
+
     msg=""
     USERNAME = private.pw.myMailUser
     PASSWORD = private.pw.myMailPass
@@ -53,10 +63,7 @@ def GetMail(my_logger):
         else:
             n_email = int(f["feed"]["fullcount"])
     except KeyError as e:
-        template = "An exception of type {0} occured. Arguments:\n{1!r}"
-        message = template.format(type(e).__name__, e.args)
-        my_logger.debug(str(message))
-        SendMail("nico@lugil.be","Yun Exception",str(message))
+        self.exception('problem when looking if new mail')
         n_email=0
     if n_email > 0:
         my_logger.debug("New mail!")
@@ -64,32 +71,37 @@ def GetMail(my_logger):
         my_logger.debug("No new mail!")
         return (False, msg)
 
-    imap_server = imaplib.IMAP4_SSL("imap.gmail.com",993)
-    imap_server.login(USERNAME, PASSWORD)
-    imap_server.select('INBOX')
+    try:
+        imap_server = imaplib.IMAP4_SSL("imap.gmail.com",993)
+        imap_server.login(USERNAME, PASSWORD)
+        imap_server.select('INBOX')
 
-    result, data = imap_server.uid('search', None, "UNSEEN") # get unseen message UIDs
-    for my_uid in data[0].split():
-        my_msg=''
-        #result, data = imap_server.uid('fetch',my_uid, '(BODY.PEEK[HEADER.FIELDS (FROM)])')   # spaces are important here !!
-        #result, data = imap_server.uid('fetch',my_uid, '(BODY.PEEK[])')   # use this if dont want to flag mail as seen
-        result, data = imap_server.uid('fetch',my_uid, '(BODY[])')
-        raw_email=data[0][1]
-        #f = open('workfile', 'w')
-        #f.write(raw_email)
-        #f.close()
-        email_msg = email.message_from_string(raw_email)
-        whofrom = email_msg.get_all('from', [])
-        my_logger.debug(whofrom[0])
-        realname,mailaddr=email.utils.parseaddr(whofrom[0])
-        #print "here it is",mailaddr,"ok",realname,"rr"
-        for part in email_msg.walk():
-            # each part is a either non-multipart, or another multipart message
-            # that contains further parts... Message is organized like a tree
-            if part.get_content_type() == 'text/plain':
-                msg=part.get_payload()
+        result, data = imap_server.uid('search', None, "UNSEEN") # get unseen message UIDs
+        for my_uid in data[0].split():
+            my_msg=''
+            #result, data = imap_server.uid('fetch',my_uid, '(BODY.PEEK[HEADER.FIELDS (FROM)])')   # spaces are important here !!
+            #result, data = imap_server.uid('fetch',my_uid, '(BODY.PEEK[])')   # use this if dont want to flag mail as seen
+            result, data = imap_server.uid('fetch',my_uid, '(BODY[])')
+            raw_email=data[0][1]
+            #f = open('workfile', 'w')
+            #f.write(raw_email)
+            #f.close()
+            email_msg = email.message_from_string(raw_email)
+            whofrom = email_msg.get_all('from', [])
+            my_logger.debug(whofrom[0])
+            realname,mailaddr=email.utils.parseaddr(whofrom[0])
+            #print "here it is",mailaddr,"ok",realname,"rr"
+            for part in email_msg.walk():
+                # each part is a either non-multipart, or another multipart message
+                # that contains further parts... Message is organized like a tree
+                if part.get_content_type() == 'text/plain':
+                    msg=part.get_payload()
 
-    imap_server.close()
-    imap_server.logout()
-
+        imap_server.close()
+        imap_server.logout()
+    except:
+        my_logger.exception('problem getting mail')    
     return (True,msg)
+
+
+
