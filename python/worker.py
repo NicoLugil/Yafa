@@ -20,11 +20,11 @@
 import io
 import sys
 import time
-#import string
-#import datetime
-#from ftplib import FTP
+import string
+import datetime
+from ftplib import FTP
 from subprocess import call
-#import StringIO
+import StringIO
 import logging
 import logging.handlers
 import copy
@@ -37,7 +37,7 @@ from YafaSMTPHandler import YafaSMTPHandler
 from TimedActions import CountDownTimer
 from TimedActions import IntervalTimer
 from GetMail import GetMail
-#from FtpStuff import directory_exists
+from FtpStuff import directory_exists
 #from SendMail import SendMail
 import lib.pythonping
 import wifiToolbox
@@ -169,9 +169,9 @@ def main():
             raise
         finally:
             YafaGlobals.main_lock.release()
+        my_logger.debug('starting CountDown')
         while not myDownCount.is_time_passed():
-            my_logger.debug('starting CountDown')
-            time.sleep(3)
+            time.sleep(1)
             YafaGlobals.main_lock.acquire()
             try:
                 YafaGlobals.timeleft=int(myDownCount.get_remaining_time())
@@ -267,7 +267,7 @@ def main():
     timer_get_web_tasks = IntervalTimer(9)
     #timer_debug = IntervalTimer(15)
 
-    my_cnt=0
+    newSettingsToFtpLog=True
     perc_cool=0.
     perc_heat=0.
     while True:
@@ -291,6 +291,7 @@ def main():
                         # write ini file 
                         myParser.saveFile(SETTINGS_FILE,local_copy_of_settings)
                         log_settings(local_copy_of_settings,TsensMsg)   # TODO: update TsensMsg
+                        newSettingsToFtpLog=True
                 except Exception as e:
                     my_logger.exception("problem checking web stuff")
             ## check wifi
@@ -343,6 +344,7 @@ def main():
                                 myParser.loadFile(".mailed_settings",YafaGlobals.settings)
                                 # TODO: go to another phase? start right away?
                                 local_copy_of_settings = copy.copy(YafaGlobals.settings)
+                                newSettingsToFtpLog=True
                             except Exception as e:
                                 my_logger.exception('parsing mail settings failed')
                         except Exception as e:
@@ -356,17 +358,12 @@ def main():
                         except Exception as e:
                             my_logger.exception("problem saving new settings received by mail")
                 except:
-                    my_logger.exception("problem checking mail")
-        except:
-            my_logger.exception("Error in main loop, will try to continue")
-
-
-"""
+                    my_logger.exception("problem checkign mail") 
+            ## log to ftp
             if timer_log.enough_time_passed():
                 #TODO: raise if no response
-                myStringIO = StringIO.StringIO()
+
                 myComm.send("Temp?","-")
-                #if myComm.check_new_msg():
                 if myComm.wait_for_new_msg(10,my_logger):
                     my_logger.debug("New Temp received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))
                     # TODO: check response comand!!!
@@ -376,16 +373,18 @@ def main():
                     my_logger.debug("New Tmax received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))
                     # TODO: check response comand!!!
                     tmax=myComm.read_value
+
                 myComm.send("Tmin?","-")
                 if myComm.wait_for_new_msg(10,my_logger):
                     my_logger.debug("New Tmin received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))
                     # TODO: check response comand!!!
                     tmin=myComm.read_value
+
                 myComm.send("CO2?","-")
                 if myComm.wait_for_new_msg(10,my_logger):
                     my_logger.debug("New CO2 pulses received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))
                     pulses=myComm.read_value
-                    ##print("New CO2 pulses received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))
+
                 myComm.send("Act?","-")
                 if myComm.wait_for_new_msg(10,my_logger):
                     my_logger.debug("New Act values received {0} {1} {2}".format(myComm.read_ID,myComm.read_command,myComm.read_value))
@@ -402,15 +401,17 @@ def main():
                         perc_cool =float(0)
                         perc_heat =float(0)
                     avg_act = perc_heat-perc_cool
+
                 try:
                     now=datetime.datetime.now()
                 except Exception as e:
-                    e.args += ('happened while trying to get time now',)
+                    my_logger.exception('problem getting time')
                     raise
                 now_str=now.strftime("%Y-%m-%d %H:%M")
+                myStringIO = StringIO.StringIO()
                 myStringIO.write(now_str)
                 myStringIO.write(",")
-                myStringIO.write(mySettings.temp)
+                myStringIO.write(local_copy_of_settings.temp)
                 myStringIO.write(",")
                 myStringIO.write(temp)
                 myStringIO.write(",")
@@ -430,30 +431,24 @@ def main():
                     ftp=FTP("ftp.homebrew.be")
                     ftp.login(private.pw.myFtpUser,private.pw.myFtpPass)
                     ftp.cwd("www.homebrew.be/Yafa")
-                    if my_cnt==0:
-                        if directory_exists(mySettings.name,ftp):
-                            my_logger.debug("dir " + str(mySettings.name) + " exists")
-                        else:
-                            my_logger.debug("dir " + str(mySettings.name) + " does not exist - creating it")
-                            ftp.mkd(mySettings.name)
-                        ftp.cwd(mySettings.name)
-                        ftp.storbinary("STOR index.html",open("/mnt/sda1/arduino/Yafa/index.html","r"))
-                        if mySettings.clear:
-                            ftp.storlines("STOR dat.csv",myStringIO)
-                        else:
-                            ftp.storlines("APPE dat.csv",myStringIO)
-                        my_cnt=1
+                    # create subdir if does not exist
+                    if directory_exists(local_copy_of_settings.name,ftp):
+                        my_logger.debug("dir " + str(local_copy_of_settings.name) + " exists")
                     else:
-                        ftp.cwd(mySettings.name)
-                        ftp.storlines("APPE dat.csv",myStringIO)
+                        my_logger.info("dir " + str(local_copy_of_settings.name) + " does not exist - creating it")
+                        ftp.mkd(local_copy_of_settings.name)
+                    ftp.cwd(local_copy_of_settings.name)
+                    if newSettingsToFtpLog:
+                        ftp.storbinary("STOR index.html",open("/mnt/sda1/arduino/Yafa/index.html","r"))
+                        newSettingsToFtpLog=False
+                    ftp.storlines("APPE dat.csv",myStringIO)
                     ftp.close()
                 except Exception as e:
-                    e.args += ('happened while trying to ftp',)
-                    raise
+                    my_logger.exception("problem doing ftp logging")
                 myStringIO.close()
                 sys.stdout.flush()
-                my_SendMail.SendPendingMail(my_logger) # TODO: do less often
-"""
+        except:
+            my_logger.exception("Error in main loop, will try to continue")
 
 if __name__ == '__main__':
     main()

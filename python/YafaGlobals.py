@@ -30,7 +30,7 @@ settings = Settings()
 class Mode:
     boot, wait_for_start, requested2run, run = ["boot", "wait_for_start", "requested2run", "run"]
 mode = Mode.boot
-timeleft = 3 #*60  # serves as initial value for worker countdown
+timeleft = 10 #*60  # serves as initial value for worker countdown
 
 lock_temperature=threading.Lock()
 temperature='Not yet measured'

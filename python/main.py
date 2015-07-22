@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Yafa. If not, see <http://www.gnu.org/licenses/>.
 
-from bottle import run, route, get, post, request
+from bottle import run, route, get, post, request, template, TEMPLATE_PATH, TEMPLATES, static_file, redirect
 import threading
 import time
 import copy
@@ -28,11 +28,11 @@ import worker
 my_error_message = "Oops something went wrong!"
 full_wait_time = YafaGlobals.timeleft
 
-#TODO: use templates
+# TODO: debug mode off?
 
-@route('/start')
-def hello():
-    return "Starting now..."
+@route('/static/<filename>')
+def server_static(filename):
+    return static_file(filename, root='./views/')
 
 @route('/')
 def root():
@@ -53,42 +53,17 @@ def root():
         return my_error_message+' : copy settings'
     finally:
         YafaGlobals.main_lock.release()
-    try:
-        msg="Current settings"
-        msg=msg+"</br>&nbsp;&nbsp;&nbsp;    name: "+str(settings_copy.name)
-        msg=msg+"</br>&nbsp;&nbsp;&nbsp;    temp: "+str(settings_copy.temp)
-        msg=msg+"</br>&nbsp;&nbsp;&nbsp;    dHeat_on: "+str(settings_copy.dHeat_on)
-        msg=msg+"</br>&nbsp;&nbsp;&nbsp;    dHeat_off: "+str(settings_copy.dHeat_off)
-        msg=msg+"</br>&nbsp;&nbsp;&nbsp;    dCool_on: "+str(settings_copy.dCool_on)
-        msg=msg+"</br>&nbsp;&nbsp;&nbsp;    dCool_off: "+str(settings_copy.dCool_off)
-        msg=msg+"</br>&nbsp;&nbsp;&nbsp;    dCool_off: "+str(settings_copy.dCool_off)
-        msg=msg+"</br>Current phase"
-        msg=msg+"</br>&nbsp;&nbsp;&nbsp;    mode: "+str(mode_copy)
-        if(mode_copy==YafaGlobals.Mode.boot):
-            msg=msg+"</br></br> <b>booting busy...please refresh in a couple of seconds</b?"
-        if(mode_copy==YafaGlobals.Mode.wait_for_start):
-            msg=msg+"</br></br> <b>auto-start countdown busy"
-            perc_rem=int(50.0*timeleft_copy/full_wait_time)
-            msg = msg + "<pre><br>"
-            # TODO: not sure this is 100% correct - good enough for now
-            for x in range(0, perc_rem-1):
-                msg = msg+'|'
-            for x in range(0, 50-perc_rem-1):
-                msg = msg+'-'
-            msg = msg +'&nbsp;&nbsp;&nbsp;' + str(timeleft_copy) + '/'+str(full_wait_time)
-            msg = msg + "</pre></b>"
-            msg = msg + '<br/> you have 2 options:'
-            msg = msg + '<br/>&nbsp;&nbsp;&nbsp;    1. do nothing - Yafa will start automatically at end of countdown with current settings'
-            msg = msg + '<br/>&nbsp;&nbsp;&nbsp;    2. change settings <a href="/settings">here</a>, and start immediately'
-        if(mode_copy==YafaGlobals.Mode.run):
-            msg = msg + '<br/>Settings can be changed <a href="/settings">here</a>'
-            msg = msg + "</br></br></br>Last measured temperature: " + str(temp_copy) + " C"
-        if(mode_copy==YafaGlobals.Mode.requested2run):
-            msg = msg + '<br/>will start asap...please refresh in a couple of seconds'
-        return msg
-    except:
-        raise
-    #return my_error_message # TODO: put back?
+    perc_rem=int(100.0*timeleft_copy/full_wait_time)
+    return template('root',
+                   name=settings_copy.name,
+                   temp=settings_copy.temp,
+                   dHeat_on=settings_copy.dHeat_on,
+                   dHeat_off=settings_copy.dHeat_off,
+                   dCool_on=settings_copy.dCool_on,
+                   dCool_off=settings_copy.dCool_off,
+                   mode=mode_copy,
+                   temp_meas=temp_copy,
+                   perc_rem=perc_rem)
 
 @get('/settings')
 def settings():
@@ -99,19 +74,13 @@ def settings():
         return my_error_message+' : copy settings'
     finally:
         YafaGlobals.main_lock.release()
-    try:
-        msg = '<form action="/settings" method="post">\n'
-        msg = msg + '<br/>Name                  : <input name="name" type="text" value="'+str(settings_copy.name)+'" style="text-align: right" onfocus="this.select()" onmouseup="return false"/>\n'
-        msg = msg + '<br/>Desired temperature   : <input name="temp" type="text" value="'+str(settings_copy.temp)+'" style="text-align: right" onfocus="this.select()" onmouseup="return false"/>\n'
-        msg = msg + '<br/>Hysteresis Heat ON    : <input name="dHeat_on" type="text" value="'+str(settings_copy.dHeat_on)+'" style="text-align: right" onfocus="this.select()" onmouseup="return false"/>\n'
-        msg = msg + '<br/>Hysteresis Heat OFF   : <input name="dHeat_off" type="text" value="'+str(settings_copy.dHeat_off)+'" style="text-align: right" onfocus="this.select()" onmouseup="return false"/>\n'
-        msg = msg + '<br/>Hysteresis Cool ON    : <input name="dCool_on" type="text" value="'+str(settings_copy.dCool_on)+'" style="text-align: right" onfocus="this.select()" onmouseup="return false"/>\n'
-        msg = msg + '<br/>Hysteresis Cool OFF   : <input name="dCool_off" type="text" value="'+str(settings_copy.dCool_off)+'" style="text-align: right" onfocus="this.select()" onmouseup="return false"/>\n'
-        msg = msg + '</br></br><input value="Set" type="submit" />'
-        msg = msg + '</form>\n'
-    except:
-        raise
-    return msg
+    return template('settings',
+                   name=settings_copy.name,
+                   temp=settings_copy.temp,
+                   dHeat_on=settings_copy.dHeat_on,
+                   dHeat_off=settings_copy.dHeat_off,
+                   dCool_on=settings_copy.dCool_on,
+                   dCool_off=settings_copy.dCool_off)
 
 @post('/settings') # or @route('/settings', method='POST')
 def do_settings():
@@ -138,24 +107,7 @@ def do_settings():
         return my_error_message+' : copy settings to global ' + str(e)
     finally:
         YafaGlobals.main_lock.release()
-    return 'Settings changed! Back to <a href="/">root</a>'
-
-"""
-@route('/status')
-def status():
-    # TODO: timeout ?
-    YafaGlobals.lock_temperature.acquire()
-    try:
-        return "Temperature="+str(YafaGlobals.temperature)
-    finally:
-        YafaGlobals.lock_temperature.release()
-
-@post('/settings') # or @route('/settings', method='POST')
-def do_settings():
-    temp = request.forms.get('temp')
-    YafaGlobals.task_q.put(temp)
-    return "<p>You succesfully set the temperature to "+str(temp)+"</p>"
-"""
+    redirect("/")
 
 def main():
 
@@ -168,6 +120,7 @@ def main():
     t.start();
     time.sleep(5) # quick 'hack' to get worker going (reading settings, etc...)
 
+    TEMPLATES.clear()
     run(host='0.0.0.0', port=48963, debug=True)
 
     print "Oops server crashed!!"
