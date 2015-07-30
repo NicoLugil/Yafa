@@ -4,6 +4,8 @@
 
 sed -i 's/exit 0//' /etc/rc.local
 echo 'sleep 5s' >> /etc/rc.local
-echo '/mnt/sda1/arduino/Yafa/main.py 1> /tmp/Yafa.print 2>&1 &' >> /etc/rc.local
+echo 'cd /mnt/sda1/arduino/Yafa/   # allows bottle to find ./views' >> /etc/rc.local
+echo './main.py 1> /dev/null 2>&1 &' >> /etc/rc.local
 echo 'exit 0' >> /etc/rc.local
+
 

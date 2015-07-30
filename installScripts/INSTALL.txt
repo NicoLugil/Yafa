@@ -21,3 +21,6 @@ getYafa (todo)
 cp paswords (also tocuh __init__.py) 
 
 load sketch
+
+
+make sure no debug to stdout enabled !!!
