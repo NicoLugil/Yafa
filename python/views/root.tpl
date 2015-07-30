@@ -29,6 +29,8 @@
     </tr>
 </table>
 
+<p><a href="/stop" class="myButton">Stop!</a></p>
+
 <h1>Status</h1>
 <h2>Phase</h2>
 <table> <tr> <td>
@@ -50,7 +52,7 @@
 %if mode=='run':
     <h2>Measured temperature</h2>
     <table> <tr> <td>
-    {{temp}}  C
+    {{temp_meas}}  C
     </td> </th> </table>
     <h2>New settings</h2>
     <p>Settings can be changed <a href="/settings">here</a>

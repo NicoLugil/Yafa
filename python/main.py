@@ -109,8 +109,34 @@ def do_settings():
         YafaGlobals.main_lock.release()
     redirect("/")
 
-def main():
+@get('/stop')
+def stop():
+    try:
+        new_settings = YafaGlobals.Settings()
+        new_settings.name = 'default'
+        new_settings.temp = 20
+        new_settings.dHeat_on = -1.0
+        new_settings.dHeat_off = 0.0
+        new_settings.dCool_on = 1.0
+        new_settings.dCool_off = 0.0
+    except Exception as e:
+        return "Unable to do default settings: "+str(e)
+    try:
+        YafaGlobals.main_lock.acquire()
+        YafaGlobals.settings.name=new_settings.name
+        YafaGlobals.settings.temp=new_settings.temp
+        YafaGlobals.settings.dHeat_on=new_settings.dHeat_on
+        YafaGlobals.settings.dHeat_off=new_settings.dHeat_off
+        YafaGlobals.settings.dCool_on=new_settings.dCool_on
+        YafaGlobals.settings.dCool_off=new_settings.dCool_off
+        YafaGlobals.mode=YafaGlobals.Mode.requested2run 
+    except Exception as e:
+        return my_error_message+' : copy settings to global ' + str(e)
+    finally:
+        YafaGlobals.main_lock.release()
+    redirect("/")
 
+def main():
 
     # start worker
     threads=[]

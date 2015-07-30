@@ -1,0 +1,20 @@
+#!/bin/sh
+
+umount /dev/sda3
+mkfs.ext4 -L YunSwap /dev/sda3
+#mkdir -p /mnt/sda3
+#mount /dev/sda3 /mnt/sda3
+#umount /dev/sda3
+mkswap /dev/sda3
+swapon /dev/sda3
+
+uci add fstab swap
+uci set fstab.@swap[0].device=/dev/sda3
+uci set fstab.@swap[0].enabled=1
+uci commit
+
+echo ' ' >> /etc/sysctl.conf
+echo 'vm.swappiness = 10' >> /etc/sysctl.conf
+
+
+

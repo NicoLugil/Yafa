@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# TODO: download Yafa stuff from site
+mkdir /mnt/sda1/arduino
+mkdir /mnt/sda1/arduino/Yafa
+mkdir /mnt/sda1/arduino/Yafa/views
+mkdir /mnt/sda1/arduino/Yafa/lib
+mkdir /mnt/sda1/arduino/Yafa/private
+
+opkg update
+opkg install distribute
+opkg install python-openssl
+easy_install pip
+pip install bottle
+
+opkg install setuptools
+gunzip feedparser-5.1.3.tar.gz
+tar -xvf feedparser-5.1.3.tar
+cd feedparser-5.1.3
+python setup.py install
+cd /tmp
+
+gunzip pyzmail-1.0.3.tar.gz
+tar -xvf pyzmail-1.0.3.tar
+cd pyzmail-1.0.3
+python setup.py install
+cd /tmp
+
+
+

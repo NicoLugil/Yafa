@@ -1,0 +1,11 @@
+#!/bin/sh
+
+opkg update
+opkg install mtd-utils
+opkg install e2fsprogs
+
+umount /dev/sda1
+umount /dev/sda2
+
+mkfs.ext4 -L YunSD1 /dev/sda1
+mkfs.ext4 -L YunSD2 /dev/sda2

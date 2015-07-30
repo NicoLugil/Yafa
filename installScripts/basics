@@ -1,0 +1,6 @@
+#!/bin/sh
+
+opkg update
+opkg install openssh-sftp-server  # needed for sshfs
+
+

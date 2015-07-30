@@ -1,0 +1,18 @@
+#!/bin/sh
+
+opkg update
+opkg install fdisk
+# for now this will only work if there is 1 partition on the SD card
+npart=`fdisk -l /dev/sda | grep sda[0-9] | wc -l | awk '{print $1}'`;
+echo Found $npart partitions on the SD card.
+if test $npart -eq 1;
+then
+        echo "OK!"
+else
+        echo "Error: should be 1 partition only at this time"
+        #(echo d; echo 2; echo w) | fdisk /dev/sda
+        exit 1
+fi
+
+(echo d; echo n; echo; echo 1; echo; echo +4G; echo n; echo; echo 2; echo; echo +3G; echo n; echo; echo 3; echo; echo +128M; echo w;) | fdisk /dev/sda
+

@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# TODO: get Yafa copy
+
+sed -i 's/exit 0//' /etc/rc.local
+echo 'sleep 5s' >> /etc/rc.local
+echo '/mnt/sda1/arduino/Yafa/main.py 1> /tmp/Yafa.print 2>&1 &' >> /etc/rc.local
+echo 'exit 0' >> /etc/rc.local
+

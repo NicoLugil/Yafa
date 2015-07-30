@@ -1,0 +1,23 @@
+This script starts from a 'empty' arduino 1.5.3 and an 8Gb SD card. See doc dir on how to get there.
+
+useful sshfs:
+
+sshfs root@arduino.local:/tmp /home/niclugil/Yuntmp
+sshfs root@arduino.local:/mnt/sda1/arduino /home/niclugil/Yun
+
+scripts/commands to run:
+
+basics
+createSD
+reboot
+createSD_part2
+reboot
+moveOS2SD
+reboot
+makeSwap
+reboot
+getPackages
+getYafa (todo)
+cp paswords (also tocuh __init__.py) 
+
+load sketch
